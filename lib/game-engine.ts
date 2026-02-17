@@ -63,44 +63,8 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
     }
   }
 
-  const baseShapeCount = 60 + level * 8;
-  const shapeCount = Math.min(baseShapeCount, 120);
-
-  for (let i = 0; i < shapeCount; i++) {
-    const type = pickRandom<ShapeType>(['rect', 'circle', 'triangle', 'right-triangle', 'rect', 'circle', 'stripe'], rand);
-    const color = pickRandom(colors, rand);
-
-    let x: number, y: number, w: number, h: number;
-
-    if (rand() < 0.3) {
-      const col = Math.floor(rand() * GRID_COLS);
-      const row = Math.floor(rand() * GRID_ROWS);
-      x = col * cellW + rand() * cellW * 0.3;
-      y = row * cellH + rand() * cellH * 0.3;
-      w = cellW * (0.4 + rand() * 1.2);
-      h = cellH * (0.4 + rand() * 1.2);
-    } else {
-      const col = Math.floor(rand() * GRID_COLS);
-      const row = Math.floor(rand() * GRID_ROWS);
-      x = col * cellW + rand() * cellW * 0.2;
-      y = row * cellH + rand() * cellH * 0.2;
-      w = cellW * (0.3 + rand() * 0.7);
-      h = cellH * (0.3 + rand() * 0.7);
-    }
-
-    const shape: GameShape = {
-      id: generateId() + '_' + i,
-      type,
-      x,
-      y,
-      width: w,
-      height: h,
-      color,
-      rotation: type === 'triangle' ? rand() * 360 : (rand() < 0.3 ? rand() * 90 : 0),
-    };
-
+  const addShape = (shape: GameShape) => {
     shapes.push(shape);
-
     for (let r = 0; r < GRID_ROWS; r++) {
       for (let c = 0; c < GRID_COLS; c++) {
         const cellX = c * cellW;
@@ -115,29 +79,89 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
         }
       }
     }
+  };
+
+  let shapeIdx = 0;
+  const makeId = (tag: string) => generateId() + '_' + tag + '_' + (shapeIdx++);
+  const allTypes: ShapeType[] = ['rect', 'circle', 'triangle', 'right-triangle', 'rect', 'circle', 'stripe'];
+
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const cx = c * cellW;
+      const cy = r * cellH;
+
+      addShape({
+        id: makeId('bg'),
+        type: 'rect',
+        x: cx,
+        y: cy,
+        width: cellW,
+        height: cellH,
+        color: pickRandom(colors, rand),
+      });
+
+      const cellShapes = 3 + Math.floor(rand() * 3);
+      for (let s = 0; s < cellShapes; s++) {
+        const type = pickRandom<ShapeType>(allTypes, rand);
+        const color = pickRandom(colors, rand);
+        const overflow = 0.3;
+        const x = cx - cellW * overflow * rand() + rand() * cellW * 0.4;
+        const y = cy - cellH * overflow * rand() + rand() * cellH * 0.4;
+        const w = cellW * (0.35 + rand() * 0.8);
+        const h = cellH * (0.35 + rand() * 0.8);
+        addShape({
+          id: makeId('cell'),
+          type,
+          x,
+          y,
+          width: w,
+          height: h,
+          color,
+          rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) : (rand() < 0.3 ? rand() * 90 : 0)),
+        });
+      }
+    }
+  }
+
+  const crossCount = 20 + Math.min(level * 4, 30);
+  for (let i = 0; i < crossCount; i++) {
+    const type = pickRandom<ShapeType>(allTypes, rand);
+    const color = pickRandom(colors, rand);
+    const x = rand() * canvasWidth * 0.85;
+    const y = rand() * canvasHeight * 0.85;
+    const w = cellW * (0.5 + rand() * 1.5);
+    const h = cellH * (0.5 + rand() * 1.2);
+    addShape({
+      id: makeId('cross'),
+      type,
+      x,
+      y,
+      width: w,
+      height: h,
+      color,
+      rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) : (rand() < 0.3 ? rand() * 90 : 0)),
+    });
   }
 
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
-      if (grid[r][c].shapes.length < 3) {
-        const extraCount = 3 + Math.floor(rand() * 3);
+      if (grid[r][c].shapes.length < 5) {
+        const extraCount = 5 - grid[r][c].shapes.length + Math.floor(rand() * 2);
         for (let e = 0; e < extraCount; e++) {
-          const type = pickRandom<ShapeType>(['rect', 'circle', 'triangle', 'right-triangle'], rand);
+          const type = pickRandom<ShapeType>(allTypes, rand);
           const color = pickRandom(colors, rand);
-          const cellX = c * cellW;
-          const cellY = r * cellH;
-          const shape: GameShape = {
-            id: generateId() + '_fill_' + r + '_' + c + '_' + e,
+          const cx = c * cellW;
+          const cy = r * cellH;
+          addShape({
+            id: makeId('fill'),
             type,
-            x: cellX + rand() * cellW * 0.6,
-            y: cellY + rand() * cellH * 0.6,
-            width: cellW * (0.2 + rand() * 0.5),
-            height: cellH * (0.2 + rand() * 0.5),
+            x: cx + rand() * cellW * 0.5,
+            y: cy + rand() * cellH * 0.5,
+            width: cellW * (0.3 + rand() * 0.7),
+            height: cellH * (0.3 + rand() * 0.7),
             color,
-            rotation: rand() * 360,
-          };
-          shapes.push(shape);
-          grid[r][c].shapes.push(shape);
+            rotation: type === 'right-triangle' ? Math.floor(rand() * 4) : rand() * 360,
+          });
         }
       }
     }
