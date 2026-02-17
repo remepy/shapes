@@ -54,6 +54,7 @@ export default function GameScreen() {
   const [userRotation, setUserRotation] = useState(0);
 
   const boardRef = useRef<View>(null);
+  const tileContainerRef = useRef<View>(null);
   const boardLayoutRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   const tileX = useSharedValue(0);
@@ -281,11 +282,15 @@ export default function GameScreen() {
             </View>
             <View
               style={styles.tileContainer}
-              onLayout={(e) => {
-                const layout = e.nativeEvent.layout;
-                e.target.measureInWindow?.((x: number, y: number) => {
-                  tileOriginalPos.current = { x, y };
-                });
+              ref={tileContainerRef}
+              onLayout={() => {
+                setTimeout(() => {
+                  tileContainerRef.current?.measureInWindow?.((x: number, y: number) => {
+                    if (x !== undefined && y !== undefined) {
+                      tileOriginalPos.current = { x, y };
+                    }
+                  });
+                }, 100);
               }}
             >
               <Animated.View
