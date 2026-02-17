@@ -21,6 +21,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Audio } from 'expo-av';
 import { GameBoard, GoalTile } from '@/components/GameBoard';
 import { generateLevel, getGridPosition, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
 import Colors from '@/constants/colors';
@@ -51,7 +52,35 @@ export default function GameScreen() {
   const [attempts, setAttempts] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
   const [userRotation, setUserRotation] = useState(0);
-  
+  const [musicPlaying, setMusicPlaying] = useState(true);
+  const soundRef = useRef<Audio.Sound | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+        const { sound } = await Audio.Sound.createAsync(
+          require('@/assets/background-music.mp3'),
+          { isLooping: true, shouldPlay: true, volume: 0.4 }
+        );
+        if (mounted) soundRef.current = sound;
+      } catch {}
+    })();
+    return () => {
+      mounted = false;
+      soundRef.current?.unloadAsync();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!soundRef.current) return;
+    if (musicPlaying) {
+      soundRef.current.playAsync();
+    } else {
+      soundRef.current.pauseAsync();
+    }
+  }, [musicPlaying]);
 
   const boardRef = useRef<View>(null);
   const tileContainerRef = useRef<View>(null);
@@ -354,6 +383,19 @@ export default function GameScreen() {
             </View>
           </Animated.View>
         )}
+        <Pressable
+          onPress={() => setMusicPlaying(prev => !prev)}
+          style={({ pressed }) => [
+            styles.musicToggle,
+            pressed && { opacity: 0.6 },
+          ]}
+        >
+          <Ionicons
+            name={musicPlaying ? 'musical-notes' : 'musical-notes-outline'}
+            size={20}
+            color={musicPlaying ? Colors.accentYellow : Colors.textSecondary}
+          />
+        </Pressable>
       </View>
     </View>
   );
@@ -494,6 +536,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik_400Regular',
     color: Colors.accent,
     writingDirection: 'rtl',
+  },
+  musicToggle: {
+    alignSelf: 'center',
+    padding: 8,
+    marginTop: 4,
   },
   victoryContainer: {
     alignItems: 'center',
