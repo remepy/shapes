@@ -140,15 +140,12 @@ export default function GameScreen() {
     setAttempts(prev => prev + 1);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     shakeX.value = withSequence(
-      withTiming(12, { duration: 50 }),
-      withTiming(-12, { duration: 50 }),
-      withTiming(8, { duration: 50 }),
-      withTiming(-8, { duration: 50 }),
-      withTiming(4, { duration: 50 }),
-      withTiming(0, { duration: 50 }),
+      withTiming(3, { duration: 60 }),
+      withTiming(-2, { duration: 60 }),
+      withTiming(0, { duration: 80 }),
     );
-    tileX.value = withSpring(0, { damping: 8, stiffness: 200 });
-    tileY.value = withSpring(0, { damping: 8, stiffness: 200 });
+    tileX.value = withSpring(0, { damping: 20, stiffness: 300 });
+    tileY.value = withSpring(0, { damping: 20, stiffness: 300 });
     tileScale.value = withSpring(1);
     tileDragging.value = withTiming(0, { duration: 200 });
   }, []);
