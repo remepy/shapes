@@ -19,7 +19,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { GameBoard, GoalTile } from '@/components/GameBoard';
 import { generateLevel, getGridPosition, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
@@ -284,7 +284,7 @@ export default function GameScreen() {
                     hintLevel > 0 && styles.hintButtonActive,
                   ]}
                 >
-                  <Feather name="eye" size={18} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
+                  <MaterialCommunityIcons name="lightbulb-outline" size={20} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
                 </Pressable>
                 <Pressable
                   onPress={() => {
