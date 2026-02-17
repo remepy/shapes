@@ -144,9 +144,9 @@ export default function GameScreen() {
       withTiming(-2, { duration: 60 }),
       withTiming(0, { duration: 80 }),
     );
-    tileX.value = withSpring(0, { damping: 20, stiffness: 300 });
-    tileY.value = withSpring(0, { damping: 20, stiffness: 300 });
-    tileScale.value = withSpring(1);
+    tileX.value = withTiming(0, { duration: 150 });
+    tileY.value = withTiming(0, { duration: 150 });
+    tileScale.value = withTiming(1, { duration: 150 });
     tileDragging.value = withTiming(0, { duration: 200 });
   }, []);
 
