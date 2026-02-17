@@ -51,6 +51,7 @@ export default function GameScreen() {
   const [score, setScore] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [userRotation, setUserRotation] = useState(0);
 
   const boardRef = useRef<View>(null);
   const boardLayoutRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
@@ -86,6 +87,7 @@ export default function GameScreen() {
     setSolved(false);
     setHighlightCell(null);
     setShowHint(false);
+    setUserRotation(0);
     tileX.value = 0;
     tileY.value = 0;
     tileScale.value = 1;
@@ -161,7 +163,7 @@ export default function GameScreen() {
 
       runOnJS(setHighlightCell)(null);
 
-      if (pos && pos.row === gameLevel.targetRow && pos.col === gameLevel.targetCol) {
+      if (pos && pos.row === gameLevel.targetRow && pos.col === gameLevel.targetCol && userRotation === gameLevel.goalRotation) {
         const cellW = CANVAS_WIDTH / GRID_DIMENSIONS.cols;
         const cellH = CANVAS_HEIGHT / GRID_DIMENSIONS.rows;
         const targetScreenX = board.x + pos.col * cellW;
@@ -263,10 +265,18 @@ export default function GameScreen() {
                 >
                   <Feather name="eye" size={18} color={showHint ? Colors.accentGreen : Colors.textSecondary} />
                 </Pressable>
-                <View style={styles.rotationBadge}>
-                  <MaterialCommunityIcons name="rotate-right" size={14} color={Colors.textSecondary} />
-                  <Text style={styles.rotationText}>{gameLevel.goalRotation}°</Text>
-                </View>
+                <Pressable
+                  onPress={() => {
+                    setUserRotation(prev => (prev + 90) % 360);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  style={({ pressed }) => [
+                    styles.rotateButton,
+                    pressed && { opacity: 0.6 },
+                  ]}
+                >
+                  <MaterialCommunityIcons name="rotate-right" size={20} color={Colors.text} />
+                </Pressable>
               </View>
             </View>
             <View
@@ -287,6 +297,7 @@ export default function GameScreen() {
                   canvasWidth={CANVAS_WIDTH}
                   canvasHeight={CANVAS_HEIGHT}
                   tileSize={TILE_SIZE}
+                  rotationOverride={userRotation}
                 />
               </Animated.View>
             </View>
@@ -436,19 +447,13 @@ const styles = StyleSheet.create({
   hintButtonActive: {
     backgroundColor: 'rgba(52, 199, 89, 0.15)',
   },
-  rotationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  rotateButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Colors.surface,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  rotationText: {
-    fontSize: 12,
-    fontFamily: 'Rubik_400Regular',
-    color: Colors.textSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tileContainer: {
     alignItems: 'center',

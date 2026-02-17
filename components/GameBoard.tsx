@@ -170,11 +170,12 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
   );
 }
 
-export function GoalTile({ level, canvasWidth, canvasHeight, tileSize }: {
+export function GoalTile({ level, canvasWidth, canvasHeight, tileSize, rotationOverride }: {
   level: GameLevel;
   canvasWidth: number;
   canvasHeight: number;
   tileSize: number;
+  rotationOverride?: number;
 }) {
   const bounds = getQuadrantBounds(level.targetRow, level.targetCol, canvasWidth, canvasHeight);
   const scale = tileSize / Math.max(bounds.width, bounds.height);
@@ -189,7 +190,7 @@ export function GoalTile({ level, canvasWidth, canvasHeight, tileSize }: {
   });
 
   const svgSize = tileSize;
-  const rotation = level.goalRotation;
+  const rotation = rotationOverride ?? level.goalRotation;
 
   return (
     <View style={[styles.goalTile, { width: svgSize, height: svgSize }]}>
