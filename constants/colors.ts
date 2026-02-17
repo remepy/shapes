@@ -12,16 +12,20 @@ const Colors = {
   overlay: 'rgba(0,0,0,0.6)',
 
   gameColors: [
-    '#FF3B30', // red
-    '#007AFF', // blue
-    '#34C759', // green
-    '#FFD60A', // yellow
+    '#FDD509', // yellow
+    '#1E54A4', // blue
+    '#1D367A', // dark blue
+    '#E52221', // red
+    '#008F48', // green
+    '#014219', // dark green
+    '#F3631F', // orange
+    '#F3801E', // light orange
+    '#72A7DF', // light blue
+    '#654785', // purple
+    '#B29BD0', // lavender
+    '#EFB7CD', // pink
     '#000000', // black
     '#FFFFFF', // white
-    '#FF69B4', // pink
-    '#AF52DE', // purple
-    '#8E8E93', // gray
-    '#FF9500', // orange
   ] as string[],
 };
 
