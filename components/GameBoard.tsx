@@ -198,12 +198,13 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
   );
 }
 
-export function GoalTile({ level, canvasWidth, canvasHeight, tileSize, rotationOverride }: {
+export function GoalTile({ level, canvasWidth, canvasHeight, tileSize, rotationOverride, showColor }: {
   level: GameLevel;
   canvasWidth: number;
   canvasHeight: number;
   tileSize: number;
   rotationOverride?: number;
+  showColor?: boolean;
 }) {
   const bounds = getQuadrantBounds(level.targetRow, level.targetCol, canvasWidth, canvasHeight);
   const scale = tileSize / Math.max(bounds.width, bounds.height);
@@ -237,12 +238,11 @@ export function GoalTile({ level, canvasWidth, canvasHeight, tileSize, rotationO
           <Rect x={0} y={0} width={svgSize} height={svgSize} fill="#1A1A1A" />
           <G transform={`scale(${scale})`}>
             {relevantShapes.map((shape) => {
-              const grey = colorToGrey(shape.color);
-              const greyShape = { ...shape, color: grey };
+              const displayShape = showColor ? shape : { ...shape, color: colorToGrey(shape.color) };
               return (
                 <RenderShape
                   key={shape.id + '_goal'}
-                  shape={greyShape}
+                  shape={displayShape}
                   clipX={bounds.x}
                   clipY={bounds.y}
                 />

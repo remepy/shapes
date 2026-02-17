@@ -49,7 +49,7 @@ export default function GameScreen() {
   const [solved, setSolved] = useState(false);
   const [score, setScore] = useState(0);
   const [attempts, setAttempts] = useState(0);
-  const [showHint, setShowHint] = useState(false);
+  const [hintLevel, setHintLevel] = useState(0);
   const [userRotation, setUserRotation] = useState(0);
   
 
@@ -103,7 +103,7 @@ export default function GameScreen() {
     setCurrentLevel(lvl);
     setSolved(false);
     setHighlightCell(null);
-    setShowHint(false);
+    setHintLevel(0);
     setUserRotation(0);
     userRotationRef.current = 0;
     tileX.value = 0;
@@ -231,10 +231,10 @@ export default function GameScreen() {
         canvasWidth={CANVAS_WIDTH}
         canvasHeight={CANVAS_HEIGHT}
         highlightCell={highlight}
-        showTarget={showHint}
+        showTarget={hintLevel >= 2}
       />
     );
-  }, [gameLevel, highlightCell, solved, showHint]);
+  }, [gameLevel, highlightCell, solved, hintLevel]);
 
   return (
     <View style={[styles.container, { paddingTop: topInset }]}>
@@ -275,16 +275,16 @@ export default function GameScreen() {
               <View style={styles.goalActions}>
                 <Pressable
                   onPress={() => {
-                    setShowHint(prev => !prev);
+                    setHintLevel(prev => Math.min(prev + 1, 2));
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
                   style={({ pressed }) => [
                     styles.hintButton,
                     pressed && { opacity: 0.6 },
-                    showHint && styles.hintButtonActive,
+                    hintLevel > 0 && styles.hintButtonActive,
                   ]}
                 >
-                  <Feather name="eye" size={18} color={showHint ? Colors.accentGreen : Colors.textSecondary} />
+                  <Feather name="eye" size={18} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -323,6 +323,7 @@ export default function GameScreen() {
                   canvasHeight={CANVAS_HEIGHT}
                   tileSize={TILE_SIZE}
                   rotationOverride={userRotation}
+                  showColor={hintLevel >= 1}
                 />
               </Animated.View>
             </View>
