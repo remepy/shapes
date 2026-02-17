@@ -139,7 +139,7 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
           y={r * cellH - 0.5}
           width={canvasWidth}
           height={1}
-          fill="rgba(255,255,255,0.05)"
+          fill="rgba(255,255,255,0.25)"
         />
       );
     }
@@ -151,7 +151,7 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
           y={0}
           width={1}
           height={canvasHeight}
-          fill="rgba(255,255,255,0.05)"
+          fill="rgba(255,255,255,0.25)"
         />
       );
     }
