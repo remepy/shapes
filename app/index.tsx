@@ -247,7 +247,7 @@ export default function GameScreen() {
         </View>
         <View style={styles.headerCenter}>
           <Text style={styles.title}>Shape Quest</Text>
-          <Text style={styles.subtitle}>מצא את הצורה</Text>
+          <Text style={styles.subtitle}>מצאו את הצורה</Text>
         </View>
         <View style={styles.headerRight}>
           <View style={styles.scoreBadge}>
@@ -271,7 +271,7 @@ export default function GameScreen() {
         {!solved ? (
           <View style={styles.goalArea}>
             <View style={styles.goalHeader}>
-              <Text style={styles.goalLabel}>גרור לתא הנכון</Text>
+              <Text style={styles.goalLabel}>גררו את הדוגמה לתא המתאים</Text>
               <View style={styles.goalActions}>
                 <Pressable
                   onPress={() => {
