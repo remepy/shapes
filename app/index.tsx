@@ -56,6 +56,7 @@ export default function GameScreen() {
   const boardRef = useRef<View>(null);
   const tileContainerRef = useRef<View>(null);
   const boardLayoutRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+  const userRotationRef = useRef(0);
 
   const tileX = useSharedValue(0);
   const tileY = useSharedValue(0);
@@ -89,6 +90,7 @@ export default function GameScreen() {
     setHighlightCell(null);
     setShowHint(false);
     setUserRotation(0);
+    userRotationRef.current = 0;
     tileX.value = 0;
     tileY.value = 0;
     tileScale.value = 1;
@@ -164,7 +166,7 @@ export default function GameScreen() {
 
       runOnJS(setHighlightCell)(null);
 
-      if (pos && pos.row === gameLevel.targetRow && pos.col === gameLevel.targetCol && userRotation === gameLevel.goalRotation) {
+      if (pos && pos.row === gameLevel.targetRow && pos.col === gameLevel.targetCol && userRotationRef.current === gameLevel.goalRotation) {
         const cellW = CANVAS_WIDTH / GRID_DIMENSIONS.cols;
         const cellH = CANVAS_HEIGHT / GRID_DIMENSIONS.rows;
         const targetScreenX = board.x + pos.col * cellW;
@@ -268,7 +270,11 @@ export default function GameScreen() {
                 </Pressable>
                 <Pressable
                   onPress={() => {
-                    setUserRotation(prev => (prev + 90) % 360);
+                    setUserRotation(prev => {
+                      const next = (prev + 90) % 360;
+                      userRotationRef.current = next;
+                      return next;
+                    });
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
                   style={({ pressed }) => [
