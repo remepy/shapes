@@ -151,7 +151,7 @@ export default function GameScreen() {
           </View>
         </View>
         <View style={styles.headerCenter}>
-          <Text style={styles.title}>לכל צורה שלא תהיה</Text>
+          <Text style={styles.title}>צורות בצרורות</Text>
           <Text style={styles.subtitle}>מצאו את הצורה</Text>
         </View>
         <View style={styles.headerRight}>
