@@ -359,30 +359,7 @@ export default function GameScreen() {
               <Text style={styles.attemptsText}>ניסיונות: {attempts}</Text>
             )}
           </View>
-        ) : (
-          <Animated.View style={[styles.victoryContainer, victoryStyle]}>
-            <View style={styles.victoryContent}>
-              <View style={styles.victoryIconRow}>
-                <Ionicons name="checkmark-circle" size={36} color={Colors.accentGreen} />
-              </View>
-              <Text style={styles.victoryText}>מצוין!</Text>
-              <Text style={styles.victoryScore}>+{Math.max(100 - (attempts) * 20, 20)} נקודות</Text>
-              <Pressable
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  startNewLevel(currentLevel + 1);
-                }}
-                style={({ pressed }) => [
-                  styles.nextButton,
-                  pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
-                ]}
-              >
-                <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
-                <Text style={styles.nextButtonText}>שלב הבא</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
-        )}
+        ) : null}
         <Pressable
           onPress={() => setMusicPlaying(prev => !prev)}
           style={({ pressed }) => [
@@ -397,6 +374,30 @@ export default function GameScreen() {
           />
         </Pressable>
       </View>
+      {solved && (
+        <Animated.View style={[styles.victoryOverlay, victoryStyle]}>
+          <View style={styles.victoryContent}>
+            <View style={styles.victoryIconRow}>
+              <Ionicons name="checkmark-circle" size={36} color={Colors.accentGreen} />
+            </View>
+            <Text style={styles.victoryText}>מצוין!</Text>
+            <Text style={styles.victoryScore}>+{Math.max(100 - (attempts) * 20, 20)} נקודות</Text>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                startNewLevel(currentLevel + 1);
+              }}
+              style={({ pressed }) => [
+                styles.nextButton,
+                pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
+              ]}
+            >
+              <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
+              <Text style={styles.nextButtonText}>שלב הבא</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -411,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 4,
   },
   headerLeft: {
     flex: 1,
@@ -542,9 +543,16 @@ const styles = StyleSheet.create({
     padding: 8,
     marginTop: 4,
   },
-  victoryContainer: {
+  victoryOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 10,
   },
   victoryContent: {
     alignItems: 'center',
