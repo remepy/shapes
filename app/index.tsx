@@ -271,7 +271,6 @@ export default function GameScreen() {
         {!solved ? (
           <View style={styles.goalArea}>
             <View style={styles.goalHeader}>
-              <Text style={styles.goalLabel}>גררו את הדוגמה לתא המתאים</Text>
               <View style={styles.goalActions}>
                 <Pressable
                   onPress={() => {
@@ -301,6 +300,7 @@ export default function GameScreen() {
                   <MaterialCommunityIcons name="rotate-right" size={20} color={Colors.text} />
                 </Pressable>
               </View>
+              <Text style={styles.goalLabel}>גררו את הדוגמה לתא המתאים</Text>
             </View>
             <View
               style={styles.tileContainer}
