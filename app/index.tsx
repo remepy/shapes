@@ -240,9 +240,9 @@ export default function GameScreen() {
     <View style={[styles.container, { paddingTop: topInset }]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelLabel}>שלב</Text>
-            <Text style={styles.levelNumber}>{currentLevel}</Text>
+          <View style={styles.scoreBadge}>
+            <Ionicons name="star" size={14} color={Colors.accentYellow} />
+            <Text style={styles.scoreText}>{score}</Text>
           </View>
         </View>
         <View style={styles.headerCenter}>
@@ -250,9 +250,8 @@ export default function GameScreen() {
           <Text style={styles.subtitle}>מצאו את הצורה</Text>
         </View>
         <View style={styles.headerRight}>
-          <View style={styles.scoreBadge}>
-            <Ionicons name="star" size={14} color={Colors.accentYellow} />
-            <Text style={styles.scoreText}>{score}</Text>
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelLabel}>שלב {currentLevel}</Text>
           </View>
         </View>
       </View>
