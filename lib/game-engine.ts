@@ -1,6 +1,6 @@
 import Colors from '@/constants/colors';
 
-export type ShapeType = 'rect' | 'circle' | 'triangle' | 'stripe';
+export type ShapeType = 'rect' | 'circle' | 'triangle' | 'right-triangle' | 'stripe';
 
 export interface GameShape {
   id: string;
@@ -67,7 +67,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
   const shapeCount = Math.min(baseShapeCount, 120);
 
   for (let i = 0; i < shapeCount; i++) {
-    const type = pickRandom<ShapeType>(['rect', 'circle', 'triangle', 'rect', 'circle', 'stripe'], rand);
+    const type = pickRandom<ShapeType>(['rect', 'circle', 'triangle', 'right-triangle', 'rect', 'circle', 'stripe'], rand);
     const color = pickRandom(colors, rand);
 
     let x: number, y: number, w: number, h: number;
@@ -122,7 +122,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
       if (grid[r][c].shapes.length < 3) {
         const extraCount = 3 + Math.floor(rand() * 3);
         for (let e = 0; e < extraCount; e++) {
-          const type = pickRandom<ShapeType>(['rect', 'circle', 'triangle'], rand);
+          const type = pickRandom<ShapeType>(['rect', 'circle', 'triangle', 'right-triangle'], rand);
           const color = pickRandom(colors, rand);
           const cellX = c * cellW;
           const cellY = r * cellH;

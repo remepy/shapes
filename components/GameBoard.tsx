@@ -92,6 +92,34 @@ function RenderShape({ shape, clipX, clipY, clipW, clipH }: {
         />
       );
     }
+    case 'right-triangle': {
+      const corner = (shape.rotation ?? 0) % 4;
+      const sx = shape.x - offsetX;
+      const sy = shape.y - offsetY;
+      const sw = shape.width;
+      const sh = shape.height;
+      let pts: string;
+      switch (corner) {
+        case 1:
+          pts = `${sx + sw},${sy} ${sx + sw},${sy + sh} ${sx},${sy + sh}`;
+          break;
+        case 2:
+          pts = `${sx + sw},${sy + sh} ${sx},${sy + sh} ${sx},${sy}`;
+          break;
+        case 3:
+          pts = `${sx},${sy + sh} ${sx},${sy} ${sx + sw},${sy}`;
+          break;
+        default:
+          pts = `${sx},${sy} ${sx + sw},${sy} ${sx},${sy + sh}`;
+          break;
+      }
+      return (
+        <Polygon
+          points={pts}
+          fill={shape.color}
+        />
+      );
+    }
     default:
       return null;
   }
