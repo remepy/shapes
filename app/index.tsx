@@ -15,7 +15,6 @@ import Animated, {
   withSpring,
   withTiming,
   withSequence,
-  runOnJS,
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
@@ -57,6 +56,10 @@ export default function GameScreen() {
   const tileContainerRef = useRef<View>(null);
   const boardLayoutRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
   const userRotationRef = useRef(0);
+  const gameLevelRef = useRef(gameLevel);
+  gameLevelRef.current = gameLevel;
+  const solvedRef = useRef(false);
+  solvedRef.current = solved;
 
   const tileX = useSharedValue(0);
   const tileY = useSharedValue(0);
@@ -69,13 +72,24 @@ export default function GameScreen() {
 
   const tileOriginalPos = useRef({ x: 0, y: 0 });
 
-  const measureBoard = useCallback(() => {
-    if (boardRef.current) {
-      boardRef.current.measureInWindow((x, y, width, height) => {
-        boardLayoutRef.current = { x, y, width, height };
-      });
+  const measureView = useCallback((ref: React.RefObject<View | null>, callback: (x: number, y: number, w: number, h: number) => void) => {
+    if (!ref.current) return;
+    if (Platform.OS === 'web') {
+      try {
+        const node = ref.current as unknown as HTMLElement;
+        const rect = node.getBoundingClientRect();
+        callback(rect.x, rect.y, rect.width, rect.height);
+      } catch {}
+    } else {
+      ref.current.measureInWindow((x, y, w, h) => callback(x, y, w, h));
     }
   }, []);
+
+  const measureBoard = useCallback(() => {
+    measureView(boardRef, (x, y, width, height) => {
+      boardLayoutRef.current = { x, y, width, height };
+    });
+  }, [measureView]);
 
   useEffect(() => {
     const timer = setTimeout(measureBoard, 500);
@@ -103,8 +117,7 @@ export default function GameScreen() {
 
   const handleCorrectDrop = useCallback(() => {
     setSolved(true);
-    const levelScore = Math.max(100 - attempts * 20, 20);
-    setScore(prev => prev + levelScore);
+    setScore(prev => prev + Math.max(100 - attempts * 20, 20));
     setAttempts(0);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     victoryOpacity.value = withSpring(1);
@@ -127,9 +140,14 @@ export default function GameScreen() {
     tileDragging.value = withTiming(0, { duration: 200 });
   }, []);
 
-  const panResponder = useMemo(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => !solved,
-    onMoveShouldSetPanResponder: () => !solved,
+  const handleCorrectDropRef = useRef(handleCorrectDrop);
+  handleCorrectDropRef.current = handleCorrectDrop;
+  const handleWrongDropRef = useRef(handleWrongDrop);
+  handleWrongDropRef.current = handleWrongDrop;
+
+  const panResponder = useRef(PanResponder.create({
+    onStartShouldSetPanResponder: () => !solvedRef.current,
+    onMoveShouldSetPanResponder: () => !solvedRef.current,
     onPanResponderGrant: () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       tileScale.value = withSpring(1.1);
@@ -149,9 +167,9 @@ export default function GameScreen() {
 
       const pos = getGridPosition(relX, relY, CANVAS_WIDTH, CANVAS_HEIGHT);
       if (pos) {
-        runOnJS(setHighlightCell)(pos);
+        setHighlightCell(pos);
       } else {
-        runOnJS(setHighlightCell)(null);
+        setHighlightCell(null);
       }
     },
     onPanResponderRelease: (_, gesture) => {
@@ -163,10 +181,11 @@ export default function GameScreen() {
       const relY = tileCenterY - board.y;
 
       const pos = getGridPosition(relX, relY, CANVAS_WIDTH, CANVAS_HEIGHT);
+      const lvl = gameLevelRef.current;
 
-      runOnJS(setHighlightCell)(null);
+      setHighlightCell(null);
 
-      if (pos && pos.row === gameLevel.targetRow && pos.col === gameLevel.targetCol && userRotationRef.current === gameLevel.goalRotation) {
+      if (pos && pos.row === lvl.targetRow && pos.col === lvl.targetCol && userRotationRef.current === lvl.goalRotation) {
         const cellW = CANVAS_WIDTH / GRID_DIMENSIONS.cols;
         const cellH = CANVAS_HEIGHT / GRID_DIMENSIONS.rows;
         const targetScreenX = board.x + pos.col * cellW;
@@ -178,12 +197,12 @@ export default function GameScreen() {
         tileX.value = withSpring(snapDx, { damping: 15, stiffness: 300 });
         tileY.value = withSpring(snapDy, { damping: 15, stiffness: 300 });
         tileScale.value = withSpring(cellW / TILE_SIZE);
-        runOnJS(handleCorrectDrop)();
+        handleCorrectDropRef.current();
       } else {
-        runOnJS(handleWrongDrop)();
+        handleWrongDropRef.current();
       }
     },
-  }), [solved, gameLevel, handleCorrectDrop, handleWrongDrop, measureBoard]);
+  })).current;
 
   const tileAnimStyle = useAnimatedStyle(() => ({
     transform: [
@@ -291,10 +310,8 @@ export default function GameScreen() {
               ref={tileContainerRef}
               onLayout={() => {
                 setTimeout(() => {
-                  tileContainerRef.current?.measureInWindow?.((x: number, y: number) => {
-                    if (x !== undefined && y !== undefined) {
-                      tileOriginalPos.current = { x, y };
-                    }
+                  measureView(tileContainerRef, (x, y) => {
+                    tileOriginalPos.current = { x, y };
                   });
                 }, 100);
               }}
