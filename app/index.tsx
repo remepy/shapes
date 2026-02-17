@@ -51,8 +51,7 @@ export default function GameScreen() {
   const [attempts, setAttempts] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [userRotation, setUserRotation] = useState(0);
-  const [positionLocked, setPositionLocked] = useState(false);
-  const [rotationHint, setRotationHint] = useState(false);
+  
 
   const boardRef = useRef<View>(null);
   const tileContainerRef = useRef<View>(null);
@@ -98,9 +97,6 @@ export default function GameScreen() {
     return () => clearTimeout(timer);
   }, [measureBoard, currentLevel]);
 
-  const positionLockedRef = useRef(false);
-  positionLockedRef.current = positionLocked;
-
   const startNewLevel = useCallback((lvl: number) => {
     const newLevel = generateLevel(lvl, CANVAS_WIDTH, CANVAS_HEIGHT);
     setGameLevel(newLevel);
@@ -109,8 +105,6 @@ export default function GameScreen() {
     setHighlightCell(null);
     setShowHint(false);
     setUserRotation(0);
-    setPositionLocked(false);
-    setRotationHint(false);
     userRotationRef.current = 0;
     tileX.value = 0;
     tileY.value = 0;
@@ -122,17 +116,7 @@ export default function GameScreen() {
     shakeX.value = 0;
   }, []);
 
-  const handleSolved = useCallback(() => {
-    setSolved(true);
-    setPositionLocked(false);
-    setRotationHint(false);
-    setScore(prev => prev + Math.max(100 - attempts * 20, 20));
-    setAttempts(0);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    victoryOpacity.value = withSpring(1);
-  }, [attempts]);
-
-  const snapTileToTarget = useCallback(() => {
+  const handleCorrectDrop = useCallback(() => {
     const board = boardLayoutRef.current;
     const lvl = gameLevelRef.current;
     const cellW = CANVAS_WIDTH / GRID_DIMENSIONS.cols;
@@ -145,19 +129,12 @@ export default function GameScreen() {
     tileY.value = withSpring(snapDy, { damping: 15, stiffness: 300 });
     tileScale.value = withSpring(cellW / TILE_SIZE);
     tileDragging.value = withTiming(0, { duration: 200 });
-  }, []);
-
-  const handlePositionCorrect = useCallback(() => {
-    const lvl = gameLevelRef.current;
-    snapTileToTarget();
-    if (userRotationRef.current === lvl.goalRotation) {
-      handleSolved();
-    } else {
-      setPositionLocked(true);
-      setRotationHint(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-  }, [snapTileToTarget, handleSolved]);
+    setSolved(true);
+    setScore(prev => prev + Math.max(100 - attempts * 20, 20));
+    setAttempts(0);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    victoryOpacity.value = withSpring(1);
+  }, [attempts]);
 
   const handleWrongDrop = useCallback(() => {
     setAttempts(prev => prev + 1);
@@ -176,14 +153,14 @@ export default function GameScreen() {
     tileDragging.value = withTiming(0, { duration: 200 });
   }, []);
 
-  const handlePositionCorrectRef = useRef(handlePositionCorrect);
-  handlePositionCorrectRef.current = handlePositionCorrect;
+  const handleCorrectDropRef = useRef(handleCorrectDrop);
+  handleCorrectDropRef.current = handleCorrectDrop;
   const handleWrongDropRef = useRef(handleWrongDrop);
   handleWrongDropRef.current = handleWrongDrop;
 
   const panResponder = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => !solvedRef.current && !positionLockedRef.current,
-    onMoveShouldSetPanResponder: () => !solvedRef.current && !positionLockedRef.current,
+    onStartShouldSetPanResponder: () => !solvedRef.current,
+    onMoveShouldSetPanResponder: () => !solvedRef.current,
     onPanResponderGrant: () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       tileScale.value = withSpring(1.1);
@@ -222,7 +199,7 @@ export default function GameScreen() {
       setHighlightCell(null);
 
       if (pos && pos.row === lvl.targetRow && pos.col === lvl.targetCol) {
-        handlePositionCorrectRef.current();
+        handleCorrectDropRef.current();
       } else {
         handleWrongDropRef.current();
       }
@@ -297,7 +274,7 @@ export default function GameScreen() {
         {!solved ? (
           <View style={styles.goalArea}>
             <View style={styles.goalHeader}>
-              <Text style={styles.goalLabel}>{positionLocked ? 'סובב לכיוון הנכון' : 'גרור לתא הנכון'}</Text>
+              <Text style={styles.goalLabel}>גרור לתא הנכון</Text>
               <View style={styles.goalActions}>
                 <Pressable
                   onPress={() => {
@@ -318,19 +295,13 @@ export default function GameScreen() {
                     setUserRotation(next);
                     userRotationRef.current = next;
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    if (positionLocked && next === gameLevel.goalRotation) {
-                      setTimeout(() => {
-                        handleSolved();
-                      }, 200);
-                    }
                   }}
                   style={({ pressed }) => [
                     styles.rotateButton,
                     pressed && { opacity: 0.6 },
-                    rotationHint && styles.rotateButtonHint,
                   ]}
                 >
-                  <MaterialCommunityIcons name="rotate-right" size={20} color={rotationHint ? Colors.accentYellow : Colors.text} />
+                  <MaterialCommunityIcons name="rotate-right" size={20} color={Colors.text} />
                 </Pressable>
               </View>
             </View>
@@ -511,11 +482,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  rotateButtonHint: {
-    backgroundColor: 'rgba(255, 204, 0, 0.2)',
-    borderWidth: 1.5,
-    borderColor: Colors.accentYellow,
   },
   tileContainer: {
     alignItems: 'center',
