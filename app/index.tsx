@@ -4,10 +4,8 @@ import {
   Text,
   StyleSheet,
   Dimensions,
-  PanResponder,
   Platform,
   Pressable,
-  I18nManager,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -16,14 +14,13 @@ import Animated, {
   withTiming,
   withSequence,
   interpolate,
-  Extrapolation,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Audio } from 'expo-av';
 import { GameBoard, GoalTile } from '@/components/GameBoard';
-import { generateLevel, getGridPosition, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
+import { generateLevel, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
 import Colors from '@/constants/colors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -82,49 +79,8 @@ export default function GameScreen() {
     }
   }, [musicPlaying]);
 
-  const boardRef = useRef<View>(null);
-  const tileContainerRef = useRef<View>(null);
-  const boardLayoutRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
-  const userRotationRef = useRef(0);
-  const gameLevelRef = useRef(gameLevel);
-  gameLevelRef.current = gameLevel;
-  const solvedRef = useRef(false);
-  solvedRef.current = solved;
-
-  const tileX = useSharedValue(0);
-  const tileY = useSharedValue(0);
-  const tileScale = useSharedValue(1);
-  const tileDragging = useSharedValue(0);
-  const boardScale = useSharedValue(1);
   const victoryOpacity = useSharedValue(0);
-  const highlightScale = useSharedValue(1);
   const shakeX = useSharedValue(0);
-
-  const tileOriginalPos = useRef({ x: 0, y: 0 });
-
-  const measureView = useCallback((ref: React.RefObject<View | null>, callback: (x: number, y: number, w: number, h: number) => void) => {
-    if (!ref.current) return;
-    if (Platform.OS === 'web') {
-      try {
-        const node = ref.current as unknown as HTMLElement;
-        const rect = node.getBoundingClientRect();
-        callback(rect.x, rect.y, rect.width, rect.height);
-      } catch {}
-    } else {
-      ref.current.measureInWindow((x, y, w, h) => callback(x, y, w, h));
-    }
-  }, []);
-
-  const measureBoard = useCallback(() => {
-    measureView(boardRef, (x, y, width, height) => {
-      boardLayoutRef.current = { x, y, width, height };
-    });
-  }, [measureView]);
-
-  useEffect(() => {
-    const timer = setTimeout(measureBoard, 500);
-    return () => clearTimeout(timer);
-  }, [measureBoard, currentLevel]);
 
   const startNewLevel = useCallback((lvl: number) => {
     const newLevel = generateLevel(lvl, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -134,114 +90,34 @@ export default function GameScreen() {
     setHighlightCell(null);
     setHintLevel(0);
     setUserRotation(0);
-    userRotationRef.current = 0;
-    tileX.value = 0;
-    tileY.value = 0;
-    tileScale.value = 1;
-    tileDragging.value = 0;
     victoryOpacity.value = 0;
-    boardScale.value = 1;
-    highlightScale.value = 1;
     shakeX.value = 0;
   }, []);
 
-  const handleCorrectDrop = useCallback(() => {
-    const board = boardLayoutRef.current;
-    const lvl = gameLevelRef.current;
-    const cellW = CANVAS_WIDTH / GRID_DIMENSIONS.cols;
-    const cellH = CANVAS_HEIGHT / GRID_DIMENSIONS.rows;
-    const targetScreenX = board.x + lvl.targetCol * cellW;
-    const targetScreenY = board.y + lvl.targetRow * cellH;
-    const snapDx = targetScreenX - tileOriginalPos.current.x;
-    const snapDy = targetScreenY - tileOriginalPos.current.y;
-    tileX.value = withSpring(snapDx, { damping: 15, stiffness: 300 });
-    tileY.value = withSpring(snapDy, { damping: 15, stiffness: 300 });
-    tileScale.value = withSpring(cellW / TILE_SIZE);
-    tileDragging.value = withTiming(0, { duration: 200 });
-    setSolved(true);
-    setScore(prev => prev + Math.max(100 - attempts * 20, 20));
-    setAttempts(0);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    victoryOpacity.value = withSpring(1);
-  }, [attempts]);
+  const handleCellTap = useCallback((row: number, col: number) => {
+    if (solved) return;
+    if (row === gameLevel.targetRow && col === gameLevel.targetCol) {
+      setSolved(true);
+      setHighlightCell({ row, col });
+      setScore(prev => prev + Math.max(100 - attempts * 20, 20));
+      setAttempts(0);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      victoryOpacity.value = withSpring(1);
+    } else {
+      setAttempts(prev => prev + 1);
+      setHighlightCell({ row, col });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      shakeX.value = withSequence(
+        withTiming(3, { duration: 60 }),
+        withTiming(-2, { duration: 60 }),
+        withTiming(0, { duration: 80 }),
+      );
+      setTimeout(() => setHighlightCell(null), 400);
+    }
+  }, [solved, gameLevel, attempts]);
 
-  const handleWrongDrop = useCallback(() => {
-    setAttempts(prev => prev + 1);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    shakeX.value = withSequence(
-      withTiming(3, { duration: 60 }),
-      withTiming(-2, { duration: 60 }),
-      withTiming(0, { duration: 80 }),
-    );
-    tileX.value = withTiming(0, { duration: 150 });
-    tileY.value = withTiming(0, { duration: 150 });
-    tileScale.value = withTiming(1, { duration: 150 });
-    tileDragging.value = withTiming(0, { duration: 200 });
-  }, []);
-
-  const handleCorrectDropRef = useRef(handleCorrectDrop);
-  handleCorrectDropRef.current = handleCorrectDrop;
-  const handleWrongDropRef = useRef(handleWrongDrop);
-  handleWrongDropRef.current = handleWrongDrop;
-
-  const panResponder = useRef(PanResponder.create({
-    onStartShouldSetPanResponder: () => !solvedRef.current,
-    onMoveShouldSetPanResponder: () => !solvedRef.current,
-    onPanResponderGrant: () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      tileScale.value = withSpring(1.1);
-      tileDragging.value = withTiming(1, { duration: 150 });
-      measureBoard();
-    },
-    onPanResponderMove: (_, gesture) => {
-      tileX.value = gesture.dx;
-      tileY.value = gesture.dy;
-
-      const board = boardLayoutRef.current;
-      const tileCenterX = tileOriginalPos.current.x + gesture.dx + TILE_SIZE / 2;
-      const tileCenterY = tileOriginalPos.current.y + gesture.dy + TILE_SIZE / 2;
-
-      const relX = tileCenterX - board.x;
-      const relY = tileCenterY - board.y;
-
-      const pos = getGridPosition(relX, relY, CANVAS_WIDTH, CANVAS_HEIGHT);
-      if (pos) {
-        setHighlightCell(pos);
-      } else {
-        setHighlightCell(null);
-      }
-    },
-    onPanResponderRelease: (_, gesture) => {
-      const board = boardLayoutRef.current;
-      const tileCenterX = tileOriginalPos.current.x + gesture.dx + TILE_SIZE / 2;
-      const tileCenterY = tileOriginalPos.current.y + gesture.dy + TILE_SIZE / 2;
-
-      const relX = tileCenterX - board.x;
-      const relY = tileCenterY - board.y;
-
-      const pos = getGridPosition(relX, relY, CANVAS_WIDTH, CANVAS_HEIGHT);
-      const lvl = gameLevelRef.current;
-
-      setHighlightCell(null);
-
-      if (pos && pos.row === lvl.targetRow && pos.col === lvl.targetCol) {
-        handleCorrectDropRef.current();
-      } else {
-        handleWrongDropRef.current();
-      }
-    },
-  })).current;
-
-  const tileAnimStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: tileX.value + shakeX.value },
-      { translateY: tileY.value },
-      { scale: tileScale.value },
-    ],
-    zIndex: tileDragging.value > 0.5 ? 100 : 1,
-    shadowOpacity: interpolate(tileDragging.value, [0, 1], [0.2, 0.6]),
-    shadowRadius: interpolate(tileDragging.value, [0, 1], [4, 16]),
-    elevation: interpolate(tileDragging.value, [0, 1], [2, 12], Extrapolation.CLAMP),
+  const tileShakeStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeX.value }],
   }));
 
   const victoryStyle = useAnimatedStyle(() => ({
@@ -286,12 +162,23 @@ export default function GameScreen() {
       </View>
 
       <View style={styles.boardContainer}>
-        <View
-          ref={boardRef}
-          onLayout={measureBoard}
-          collapsable={false}
-        >
+        <View style={{ position: 'relative' }}>
           {highlightedBoard}
+          {!solved && (
+            <View style={StyleSheet.absoluteFill}>
+              {Array.from({ length: GRID_DIMENSIONS.rows }, (_, row) => (
+                <View key={row} style={{ flex: 1, flexDirection: 'row' }}>
+                  {Array.from({ length: GRID_DIMENSIONS.cols }, (_, col) => (
+                    <Pressable
+                      key={col}
+                      style={{ flex: 1 }}
+                      onPress={() => handleCellTap(row, col)}
+                    />
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </View>
 
@@ -317,7 +204,6 @@ export default function GameScreen() {
                   onPress={() => {
                     const next = (userRotation + 90) % 360;
                     setUserRotation(next);
-                    userRotationRef.current = next;
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
                   style={({ pressed }) => [
@@ -328,33 +214,18 @@ export default function GameScreen() {
                   <MaterialCommunityIcons name="rotate-right" size={20} color={Colors.text} />
                 </Pressable>
               </View>
-              <Text style={styles.goalLabel}>גררו את הדוגמה לתא המתאים</Text>
+              <Text style={styles.goalLabel}>הקישו על התא המתאים</Text>
             </View>
-            <View
-              style={styles.tileContainer}
-              ref={tileContainerRef}
-              onLayout={() => {
-                setTimeout(() => {
-                  measureView(tileContainerRef, (x, y) => {
-                    tileOriginalPos.current = { x, y };
-                  });
-                }, 100);
-              }}
-            >
-              <Animated.View
-                style={[styles.draggableTile, tileAnimStyle]}
-                {...panResponder.panHandlers}
-              >
-                <GoalTile
-                  level={gameLevel}
-                  canvasWidth={CANVAS_WIDTH}
-                  canvasHeight={CANVAS_HEIGHT}
-                  tileSize={TILE_SIZE}
-                  rotationOverride={userRotation}
-                  showColor={hintLevel >= 1}
-                />
-              </Animated.View>
-            </View>
+            <Animated.View style={tileShakeStyle}>
+              <GoalTile
+                level={gameLevel}
+                canvasWidth={CANVAS_WIDTH}
+                canvasHeight={CANVAS_HEIGHT}
+                tileSize={TILE_SIZE}
+                rotationOverride={userRotation}
+                showColor={hintLevel >= 1}
+              />
+            </Animated.View>
             {attempts > 0 && (
               <Text style={styles.attemptsText}>ניסיונות: {attempts}</Text>
             )}
@@ -522,15 +393,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tileContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: TILE_SIZE + 20,
-  },
-  draggableTile: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
   },
   attemptsText: {
     fontSize: 12,
