@@ -83,7 +83,11 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
 
   let shapeIdx = 0;
   const makeId = (tag: string) => generateId() + '_' + tag + '_' + (shapeIdx++);
-  const allTypes: ShapeType[] = ['rect', 'circle', 'triangle', 'right-triangle', 'rect', 'circle', 'stripe'];
+  const nonStripeTypes: ShapeType[] = ['rect', 'circle', 'triangle', 'right-triangle'];
+  const pickType = (): ShapeType => {
+    if (rand() < 0.2) return 'stripe';
+    return pickRandom(nonStripeTypes, rand);
+  };
 
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
@@ -102,7 +106,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
 
       const cellShapes = 3 + Math.floor(rand() * 3);
       for (let s = 0; s < cellShapes; s++) {
-        const type = pickRandom<ShapeType>(allTypes, rand);
+        const type = pickType();
         const color = pickRandom(colors, rand);
         const overflow = 0.3;
         const x = cx - cellW * overflow * rand() + rand() * cellW * 0.4;
@@ -125,7 +129,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
 
   const crossCount = 20 + Math.min(level * 4, 30);
   for (let i = 0; i < crossCount; i++) {
-    const type = pickRandom<ShapeType>(allTypes, rand);
+    const type = pickType();
     const color = pickRandom(colors, rand);
     const x = rand() * canvasWidth * 0.85;
     const y = rand() * canvasHeight * 0.85;
@@ -148,7 +152,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
       if (grid[r][c].shapes.length < 5) {
         const extraCount = 5 - grid[r][c].shapes.length + Math.floor(rand() * 2);
         for (let e = 0; e < extraCount; e++) {
-          const type = pickRandom<ShapeType>(allTypes, rand);
+          const type = pickType();
           const color = pickRandom(colors, rand);
           const cx = c * cellW;
           const cy = r * cellH;
