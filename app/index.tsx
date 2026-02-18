@@ -24,15 +24,25 @@ import { generateLevel, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
 import Colors from '@/constants/colors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const WEB_TOP_INSET = Platform.OS === 'web' ? 67 : 0;
+const WEB_TOP_INSET = Platform.OS === 'web' ? 34 : 0;
 const WEB_BOTTOM_INSET = Platform.OS === 'web' ? 34 : 0;
 
 const CANVAS_PADDING = 16;
-const CANVAS_WIDTH = SCREEN_WIDTH - CANVAS_PADDING * 2;
+const BASE_CANVAS_WIDTH = SCREEN_WIDTH - CANVAS_PADDING * 2;
 const CANVAS_ASPECT = 6 / 4;
-const CANVAS_HEIGHT = CANVAS_WIDTH * CANVAS_ASPECT;
+const BASE_CANVAS_HEIGHT = BASE_CANVAS_WIDTH * CANVAS_ASPECT;
 
-const TILE_SIZE = Math.min(CANVAS_WIDTH / GRID_DIMENSIONS.cols, 90);
+const HEADER_HEIGHT = 50;
+const GOAL_AREA_HEIGHT = 160;
+const AVAILABLE_FOR_CANVAS = SCREEN_HEIGHT - WEB_TOP_INSET - WEB_BOTTOM_INSET - HEADER_HEIGHT - GOAL_AREA_HEIGHT;
+const SCALE_FACTOR = AVAILABLE_FOR_CANVAS < BASE_CANVAS_HEIGHT
+  ? AVAILABLE_FOR_CANVAS / BASE_CANVAS_HEIGHT
+  : 1;
+
+const CANVAS_WIDTH = BASE_CANVAS_WIDTH * SCALE_FACTOR;
+const CANVAS_HEIGHT = BASE_CANVAS_HEIGHT * SCALE_FACTOR;
+
+const TILE_SIZE = Math.min(CANVAS_WIDTH / GRID_DIMENSIONS.cols, 90 * SCALE_FACTOR);
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
