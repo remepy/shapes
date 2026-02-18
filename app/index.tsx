@@ -23,9 +23,17 @@ import { GameBoard, GoalTile } from '@/components/GameBoard';
 import { generateLevel, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
 import Colors from '@/constants/colors';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const WEB_TOP_INSET = Platform.OS === 'web' ? 34 : 0;
-const WEB_BOTTOM_INSET = Platform.OS === 'web' ? 34 : 0;
+const { width: RAW_SCREEN_WIDTH, height: RAW_SCREEN_HEIGHT } = Dimensions.get('window');
+
+const PHONE_WIDTH = 360;
+const PHONE_HEIGHT = 780;
+const IS_DESKTOP_WEB = Platform.OS === 'web' && RAW_SCREEN_WIDTH > 500;
+
+const SCREEN_WIDTH = IS_DESKTOP_WEB ? PHONE_WIDTH : RAW_SCREEN_WIDTH;
+const SCREEN_HEIGHT = IS_DESKTOP_WEB ? PHONE_HEIGHT : RAW_SCREEN_HEIGHT;
+
+const WEB_TOP_INSET = Platform.OS === 'web' ? (IS_DESKTOP_WEB ? 16 : 34) : 0;
+const WEB_BOTTOM_INSET = Platform.OS === 'web' ? (IS_DESKTOP_WEB ? 16 : 34) : 0;
 
 const CANVAS_PADDING = 16;
 const BASE_CANVAS_WIDTH = SCREEN_WIDTH - CANVAS_PADDING * 2;
@@ -33,7 +41,7 @@ const CANVAS_ASPECT = 6 / 4;
 const BASE_CANVAS_HEIGHT = BASE_CANVAS_WIDTH * CANVAS_ASPECT;
 
 const HEADER_HEIGHT = 50;
-const GOAL_AREA_HEIGHT = 160;
+const GOAL_AREA_HEIGHT = 180;
 const AVAILABLE_FOR_CANVAS = SCREEN_HEIGHT - WEB_TOP_INSET - WEB_BOTTOM_INSET - HEADER_HEIGHT - GOAL_AREA_HEIGHT;
 const SCALE_FACTOR = AVAILABLE_FOR_CANVAS < BASE_CANVAS_HEIGHT
   ? AVAILABLE_FOR_CANVAS / BASE_CANVAS_HEIGHT
@@ -42,7 +50,7 @@ const SCALE_FACTOR = AVAILABLE_FOR_CANVAS < BASE_CANVAS_HEIGHT
 const CANVAS_WIDTH = BASE_CANVAS_WIDTH * SCALE_FACTOR;
 const CANVAS_HEIGHT = BASE_CANVAS_HEIGHT * SCALE_FACTOR;
 
-const TILE_SIZE = Math.min(CANVAS_WIDTH / GRID_DIMENSIONS.cols, 90 * SCALE_FACTOR);
+const TILE_SIZE = Math.max(Math.min(CANVAS_WIDTH / GRID_DIMENSIONS.cols, 90 * SCALE_FACTOR), 96);
 
 export default function GameScreen() {
   const insets = useSafeAreaInsets();
@@ -151,8 +159,19 @@ export default function GameScreen() {
     );
   }, [gameLevel, highlightCell, solved, hintLevel]);
 
+  const phoneFrame = IS_DESKTOP_WEB ? {
+    width: PHONE_WIDTH,
+    height: PHONE_HEIGHT,
+    alignSelf: 'center' as const,
+    borderRadius: 24,
+    overflow: 'hidden' as const,
+    borderWidth: 2,
+    borderColor: '#333',
+  } : undefined;
+
   return (
-    <View style={[styles.container, { paddingTop: topInset }]}>
+    <View style={IS_DESKTOP_WEB ? styles.desktopWrapper : undefined}>
+      <View style={[styles.container, { paddingTop: topInset }, phoneFrame]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.scoreBadge}>
@@ -280,10 +299,17 @@ export default function GameScreen() {
         </Animated.View>
       )}
     </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  desktopWrapper: {
+    flex: 1,
+    backgroundColor: '#000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
