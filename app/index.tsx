@@ -48,7 +48,7 @@ export default function GameScreen() {
   const [score, setScore] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
-  const [userRotation, setUserRotation] = useState(0);
+  const [userRotation, setUserRotation] = useState(() => [0, 90, 180, 270][Math.floor(Math.random() * 4)]);
   const [musicPlaying, setMusicPlaying] = useState(true);
   const soundRef = useRef<Audio.Sound | null>(null);
 
@@ -89,7 +89,7 @@ export default function GameScreen() {
     setSolved(false);
     setHighlightCell(null);
     setHintLevel(0);
-    setUserRotation(0);
+    setUserRotation([0, 90, 180, 270][Math.floor(Math.random() * 4)]);
     victoryOpacity.value = 0;
     shakeX.value = 0;
   }, []);
