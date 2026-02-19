@@ -227,7 +227,7 @@ export default function GameScreen() {
                     hintLevel > 0 && styles.hintButtonActive,
                   ]}
                 >
-                  <MaterialCommunityIcons name="lightbulb-outline" size={20} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
+                  <MaterialCommunityIcons name="lightbulb-outline" size={40} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -240,7 +240,7 @@ export default function GameScreen() {
                     pressed && { opacity: 0.6 },
                   ]}
                 >
-                  <MaterialCommunityIcons name="rotate-right" size={20} color={Colors.text} />
+                  <MaterialCommunityIcons name="rotate-right" size={40} color={Colors.text} />
                 </Pressable>
               </View>
               <Text style={styles.goalLabel}>הקישו על התא המתאים</Text>
@@ -412,9 +412,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hintButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -423,9 +423,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(52, 199, 89, 0.15)',
   },
   rotateButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
