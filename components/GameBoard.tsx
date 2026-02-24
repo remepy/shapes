@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   goalTile: {
     borderRadius: 8,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1.5,
+    borderColor: '#00FFFF',
   },
 });
