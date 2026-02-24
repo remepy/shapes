@@ -136,9 +136,9 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
         <Rect
           key={`hline_${r}`}
           x={0}
-          y={r * cellH - 0.5}
+          y={r * cellH - 0.875}
           width={canvasWidth}
-          height={1}
+          height={1.75}
           fill="rgba(255,255,255,0.25)"
         />
       );
@@ -147,9 +147,9 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
       lines.push(
         <Rect
           key={`vline_${c}`}
-          x={c * cellW - 0.5}
+          x={c * cellW - 0.875}
           y={0}
-          width={1}
+          width={1.75}
           height={canvasHeight}
           fill="rgba(255,255,255,0.25)"
         />
