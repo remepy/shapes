@@ -181,7 +181,6 @@ export default function GameScreen() {
         </View>
         <View style={styles.headerCenter}>
           <Text style={styles.title}>צורות בצרורות</Text>
-          <Text style={styles.subtitle}>מצאו את הצורה</Text>
         </View>
         <View style={styles.headerRight}>
           <View style={styles.levelBadge}>
@@ -214,7 +213,8 @@ export default function GameScreen() {
       <View style={[styles.bottomArea, { paddingBottom: bottomInset + 8 }]}>
         {!solved ? (
           <View style={styles.goalArea}>
-            <View style={styles.goalHeader}>
+            <Text style={styles.goalCaption}>:מצאו את הצורה הבאה</Text>
+            <View style={styles.goalRow}>
               <View style={styles.goalActions}>
                 <Pressable
                   onPress={() => {
@@ -243,18 +243,18 @@ export default function GameScreen() {
                   <MaterialCommunityIcons name="rotate-right" size={40} color={Colors.text} />
                 </Pressable>
               </View>
-              <Text style={styles.goalLabel}>הקישו על התא המתאים</Text>
+              <Animated.View style={tileShakeStyle}>
+                <GoalTile
+                  level={gameLevel}
+                  canvasWidth={CANVAS_WIDTH}
+                  canvasHeight={CANVAS_HEIGHT}
+                  tileSize={TILE_SIZE}
+                  rotationOverride={userRotation}
+                  showColor={hintLevel >= 1}
+                />
+              </Animated.View>
             </View>
-            <Animated.View style={tileShakeStyle}>
-              <GoalTile
-                level={gameLevel}
-                canvasWidth={CANVAS_WIDTH}
-                canvasHeight={CANVAS_HEIGHT}
-                tileSize={TILE_SIZE}
-                rotationOverride={userRotation}
-                showColor={hintLevel >= 1}
-              />
-            </Animated.View>
+            <Text style={styles.goalDirective}>הקישו על התא המתאים</Text>
             {attempts > 0 && (
               <Text style={styles.attemptsText}>ניסיונות: {attempts}</Text>
             )}
@@ -393,18 +393,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  goalHeader: {
+  goalCaption: {
+    fontSize: 16,
+    fontFamily: 'Rubik_500Medium',
+    color: Colors.text,
+    writingDirection: 'rtl',
+    textAlign: 'center',
+  },
+  goalRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: 16,
   },
-  goalLabel: {
+  goalDirective: {
     fontSize: 14,
-    fontFamily: 'Rubik_500Medium',
+    fontFamily: 'Rubik_400Regular',
     color: Colors.textSecondary,
     writingDirection: 'rtl',
+    textAlign: 'center',
   },
   goalActions: {
     flexDirection: 'row',
