@@ -178,6 +178,19 @@ export default function GameScreen() {
             <Ionicons name="star" size={14} color={Colors.accentYellow} />
             <Text style={styles.scoreText}>{score}</Text>
           </View>
+          <Pressable
+            onPress={() => setMusicPlaying(prev => !prev)}
+            style={({ pressed }) => [
+              styles.musicToggle,
+              pressed && { opacity: 0.6 },
+            ]}
+          >
+            <Ionicons
+              name={musicPlaying ? 'musical-notes' : 'musical-notes-outline'}
+              size={20}
+              color={musicPlaying ? Colors.accentYellow : Colors.textSecondary}
+            />
+          </Pressable>
         </View>
         <View style={styles.headerCenter}>
           <Text style={styles.title}>צורות בצרורות</Text>
@@ -258,19 +271,6 @@ export default function GameScreen() {
             </View>
           </View>
         ) : null}
-        <Pressable
-          onPress={() => setMusicPlaying(prev => !prev)}
-          style={({ pressed }) => [
-            styles.musicToggle,
-            pressed && { opacity: 0.6 },
-          ]}
-        >
-          <Ionicons
-            name={musicPlaying ? 'musical-notes' : 'musical-notes-outline'}
-            size={20}
-            color={musicPlaying ? Colors.accentYellow : Colors.textSecondary}
-          />
-        </Pressable>
       </View>
       {solved && (
         <Animated.View style={[styles.victoryOverlay, victoryStyle]}>
@@ -321,7 +321,9 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   headerCenter: {
     flex: 2,
@@ -437,9 +439,7 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   musicToggle: {
-    alignSelf: 'center',
-    padding: 8,
-    marginTop: 4,
+    padding: 4,
   },
   victoryOverlay: {
     position: 'absolute',
