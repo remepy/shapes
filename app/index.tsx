@@ -213,51 +213,49 @@ export default function GameScreen() {
       <View style={[styles.bottomArea, { paddingBottom: bottomInset + 8 }]}>
         {!solved ? (
           <View style={styles.goalArea}>
-            <Text style={styles.goalCaption}>:מצאו את הצורה הבאה</Text>
-            <View style={styles.goalRow}>
-              <View style={styles.goalActions}>
-                <Pressable
-                  onPress={() => {
-                    setHintLevel(prev => Math.min(prev + 1, 2));
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  style={({ pressed }) => [
-                    styles.hintButton,
-                    pressed && { opacity: 0.6 },
-                    hintLevel > 0 && styles.hintButtonActive,
-                  ]}
-                >
-                  <MaterialCommunityIcons name="lightbulb-outline" size={40} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    const next = (userRotation + 90) % 360;
-                    setUserRotation(next);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  style={({ pressed }) => [
-                    styles.rotateButton,
-                    pressed && { opacity: 0.6 },
-                  ]}
-                >
-                  <MaterialCommunityIcons name="rotate-right" size={40} color={Colors.text} />
-                </Pressable>
-              </View>
-              <Animated.View style={tileShakeStyle}>
-                <GoalTile
-                  level={gameLevel}
-                  canvasWidth={CANVAS_WIDTH}
-                  canvasHeight={CANVAS_HEIGHT}
-                  tileSize={TILE_SIZE}
-                  rotationOverride={userRotation}
-                  showColor={hintLevel >= 1}
-                />
-              </Animated.View>
-            </View>
+            <Text style={styles.goalCaption}>מצאו את הצורה הבאה:</Text>
+            <Animated.View style={tileShakeStyle}>
+              <GoalTile
+                level={gameLevel}
+                canvasWidth={CANVAS_WIDTH}
+                canvasHeight={CANVAS_HEIGHT}
+                tileSize={TILE_SIZE}
+                rotationOverride={userRotation}
+                showColor={hintLevel >= 1}
+              />
+            </Animated.View>
             <Text style={styles.goalDirective}>הקישו על התא המתאים</Text>
             {attempts > 0 && (
               <Text style={styles.attemptsText}>ניסיונות: {attempts}</Text>
             )}
+            <View style={styles.goalActions}>
+              <Pressable
+                onPress={() => {
+                  setHintLevel(prev => Math.min(prev + 1, 2));
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                style={({ pressed }) => [
+                  styles.hintButton,
+                  pressed && { opacity: 0.6 },
+                  hintLevel > 0 && styles.hintButtonActive,
+                ]}
+              >
+                <MaterialCommunityIcons name="lightbulb-outline" size={40} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  const next = (userRotation + 90) % 360;
+                  setUserRotation(next);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                style={({ pressed }) => [
+                  styles.rotateButton,
+                  pressed && { opacity: 0.6 },
+                ]}
+              >
+                <MaterialCommunityIcons name="rotate-right" size={40} color={Colors.text} />
+              </Pressable>
+            </View>
           </View>
         ) : null}
         <Pressable
@@ -398,13 +396,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik_500Medium',
     color: Colors.text,
     writingDirection: 'rtl',
-    textAlign: 'center',
-  },
-  goalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
+    textAlign: 'right',
+    alignSelf: 'center',
   },
   goalDirective: {
     fontSize: 14,
