@@ -104,7 +104,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
         color: pickRandom(colors, rand),
       });
 
-      const cellShapes = 3 + Math.floor(rand() * 3);
+      const cellShapes = 2 + Math.floor(rand() * 2);
       for (let s = 0; s < cellShapes; s++) {
         const type = pickType();
         const color = pickRandom(colors, rand);
@@ -127,7 +127,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
     }
   }
 
-  const crossCount = 20 + Math.min(level * 4, 30);
+  const crossCount = 12 + Math.min(level * 2, 18);
   for (let i = 0; i < crossCount; i++) {
     const type = pickType();
     const color = pickRandom(colors, rand);
@@ -149,8 +149,8 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
 
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
-      if (grid[r][c].shapes.length < 5) {
-        const extraCount = 5 - grid[r][c].shapes.length + Math.floor(rand() * 2);
+      if (grid[r][c].shapes.length < 3) {
+        const extraCount = 3 - grid[r][c].shapes.length + Math.floor(rand() * 2);
         for (let e = 0; e < extraCount; e++) {
           const type = pickType();
           const color = pickRandom(colors, rand);
