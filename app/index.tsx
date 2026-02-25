@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   goalCaption: {
     fontSize: 16,
     fontFamily: 'Rubik_500Medium',
-    color: Colors.text,
+    color: '#00FFFF',
     writingDirection: 'rtl',
     textAlign: 'right',
     alignSelf: 'center',
