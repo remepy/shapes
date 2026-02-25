@@ -171,22 +171,8 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
     }
   }
 
-  let targetRow: number, targetCol: number;
-  let bestCount = 0;
-  targetRow = Math.floor(rand() * GRID_ROWS);
-  targetCol = Math.floor(rand() * GRID_COLS);
-
-  for (let r = 0; r < GRID_ROWS; r++) {
-    for (let c = 0; c < GRID_COLS; c++) {
-      if (grid[r][c].shapes.length > bestCount) {
-        if (rand() < 0.5) {
-          bestCount = grid[r][c].shapes.length;
-          targetRow = r;
-          targetCol = c;
-        }
-      }
-    }
-  }
+  const targetRow = Math.floor(rand() * GRID_ROWS);
+  const targetCol = Math.floor(rand() * GRID_COLS);
 
   const rotations = [0, 90, 180, 270];
   const goalRotation = pickRandom(rotations, rand);
