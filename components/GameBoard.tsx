@@ -229,13 +229,13 @@ export function GoalTile({ level, canvasWidth, canvasHeight, tileSize, rotationO
             <Rect x={0} y={0} width={svgSize} height={svgSize} />
           </ClipPath>
         </Defs>
-        <Rect x={0} y={0} width={svgSize} height={svgSize} fill="#2A2A2A" />
+        <Rect x={0} y={0} width={svgSize} height={svgSize} fill="#3A3A3A" />
         <G
           clipPath="url(#goalClip)"
           transform={`rotate(${rotation}, ${svgSize / 2}, ${svgSize / 2})`}
-          opacity={0.85}
+          opacity={1}
         >
-          <Rect x={0} y={0} width={svgSize} height={svgSize} fill="#1A1A1A" />
+          <Rect x={0} y={0} width={svgSize} height={svgSize} fill="#3A3A3A" />
           <G transform={`scale(${scale})`}>
             {relevantShapes.map((shape) => {
               const displayShape = showColor ? shape : { ...shape, color: colorToGrey(shape.color) };
@@ -255,13 +255,31 @@ export function GoalTile({ level, canvasWidth, canvasHeight, tileSize, rotationO
   );
 }
 
+const GAME_COLORS_GREY_RANGE = (() => {
+  const gameColors = Colors.gameColors;
+  let min = 255, max = 0;
+  for (const hex of gameColors) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substr(0, 2), 16) || 0;
+    const g = parseInt(h.substr(2, 2), 16) || 0;
+    const b = parseInt(h.substr(4, 2), 16) || 0;
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (lum < min) min = lum;
+    if (lum > max) max = lum;
+  }
+  return { min, max };
+})();
+
 function colorToGrey(hexColor: string): string {
   const hex = hexColor.replace('#', '');
   const r = parseInt(hex.substr(0, 2), 16) || 0;
   const g = parseInt(hex.substr(2, 2), 16) || 0;
   const b = parseInt(hex.substr(4, 2), 16) || 0;
-  const grey = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-  const greyHex = grey.toString(16).padStart(2, '0');
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  const { min, max } = GAME_COLORS_GREY_RANGE;
+  const range = max - min || 1;
+  const stretched = Math.round(((lum - min) / range) * 220 + 20);
+  const greyHex = Math.max(0, Math.min(255, stretched)).toString(16).padStart(2, '0');
   return `#${greyHex}${greyHex}${greyHex}`;
 }
 
