@@ -220,13 +220,18 @@ export default function GameScreen() {
               ))}
             </View>
           )}
+          {attempts > 0 && !solved && (
+            <View style={styles.attemptsPill}>
+              <Text style={styles.attemptsPillText}>ניסיונות: {attempts}</Text>
+            </View>
+          )}
         </View>
       </View>
 
       <View style={[styles.bottomArea, { paddingBottom: bottomInset + 8 }]}>
         {!solved ? (
           <View style={styles.goalArea}>
-            <Text style={styles.goalCaption}>מצאו את הצורה הבאה:</Text>
+            <Text style={styles.goalCaption}>לחצו על התא שמכיל את הצורה הבאה:</Text>
             <Animated.View style={tileShakeStyle}>
               <GoalTile
                 level={gameLevel}
@@ -237,10 +242,6 @@ export default function GameScreen() {
                 showColor={hintLevel >= 1}
               />
             </Animated.View>
-            <Text style={styles.goalDirective}>הקישו על התא המתאים</Text>
-            {attempts > 0 && (
-              <Text style={styles.attemptsText}>ניסיונות: {attempts}</Text>
-            )}
             <View style={styles.goalActions}>
               <Pressable
                 onPress={() => {
@@ -394,19 +395,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   goalCaption: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Rubik_500Medium',
     color: '#00FFFF',
     writingDirection: 'rtl',
-    textAlign: 'right',
-    alignSelf: 'center',
-  },
-  goalDirective: {
-    fontSize: 14,
-    fontFamily: 'Rubik_400Regular',
-    color: Colors.textSecondary,
-    writingDirection: 'rtl',
     textAlign: 'center',
+    alignSelf: 'center',
   },
   goalActions: {
     flexDirection: 'row',
@@ -432,10 +426,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  attemptsText: {
-    fontSize: 12,
+  attemptsPill: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  attemptsPillText: {
+    fontSize: 11,
     fontFamily: 'Rubik_400Regular',
-    color: Colors.accent,
+    color: '#fff',
     writingDirection: 'rtl',
   },
   musicToggle: {
