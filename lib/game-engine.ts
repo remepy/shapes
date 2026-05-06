@@ -49,7 +49,7 @@ function generateId(): string {
 }
 
 export function generateLevel(level: number, canvasWidth: number, canvasHeight: number): GameLevel {
-  const rand = seededRandom(level * 7919 + 42);
+  const rand = seededRandom(Math.floor(Math.random() * 2147483646) + 1);
   const cellW = canvasWidth / GRID_COLS;
   const cellH = canvasHeight / GRID_ROWS;
   const shapes: GameShape[] = [];
