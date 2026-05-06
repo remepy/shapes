@@ -175,9 +175,9 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
             y={highlightCell.row * cellH}
             width={cellW}
             height={cellH}
-            fill="rgba(255,255,255,0.28)"
-            stroke="#FFFFFF"
-            strokeWidth={3.5}
+            fill="rgba(255,255,255,0.15)"
+            stroke="rgba(255,255,255,0.4)"
+            strokeWidth={2}
           />
         )}
 
