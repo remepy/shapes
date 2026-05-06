@@ -89,11 +89,11 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
     return pickRandom(nonStripeTypes, rand);
   };
 
+  // Pass 1: one background rect per cell
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
       const cx = c * cellW;
       const cy = r * cellH;
-
       addShape({
         id: makeId('bg'),
         type: 'rect',
@@ -103,38 +103,46 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
         height: cellH,
         color: pickRandom(colors, rand),
       });
-
-      const cellShapes = 2 + Math.floor(rand() * 2);
-      for (let s = 0; s < cellShapes; s++) {
-        const type = pickType();
-        const color = pickRandom(colors, rand);
-        const overflow = 0.3;
-        const x = cx - cellW * overflow * rand() + rand() * cellW * 0.4;
-        const y = cy - cellH * overflow * rand() + rand() * cellH * 0.4;
-        const w = cellW * (0.35 + rand() * 0.8);
-        const h = cellH * (0.35 + rand() * 0.8);
-        addShape({
-          id: makeId('cell'),
-          type,
-          x,
-          y,
-          width: w,
-          height: h,
-          color,
-          rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) : (rand() < 0.3 ? rand() * 90 : 0)),
-        });
-      }
     }
   }
 
-  const crossCount = 12 + Math.min(level * 2, 18);
+  // Pass 2: exactly one main shape per cell, jittered within the cell for variety
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const cx = c * cellW;
+      const cy = r * cellH;
+      const type = pickType();
+      const color = pickRandom(colors, rand);
+      // Size: 50–85% of cell, randomly varied
+      const w = cellW * (0.5 + rand() * 0.35);
+      const h = cellH * (0.5 + rand() * 0.35);
+      // Position: centered in cell with up to ±20% jitter
+      const jitterX = (rand() - 0.5) * cellW * 0.4;
+      const jitterY = (rand() - 0.5) * cellH * 0.4;
+      const x = cx + (cellW - w) / 2 + jitterX;
+      const y = cy + (cellH - h) / 2 + jitterY;
+      addShape({
+        id: makeId('cell'),
+        type,
+        x,
+        y,
+        width: w,
+        height: h,
+        color,
+        rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) * 90 : (rand() < 0.35 ? rand() * 180 : 0)),
+      });
+    }
+  }
+
+  // Pass 3: a small number of large cross-cell accent shapes for visual interest
+  const crossCount = 4 + Math.floor(rand() * 3);
   for (let i = 0; i < crossCount; i++) {
     const type = pickType();
     const color = pickRandom(colors, rand);
-    const x = rand() * canvasWidth * 0.85;
-    const y = rand() * canvasHeight * 0.85;
-    const w = cellW * (0.5 + rand() * 1.5);
-    const h = cellH * (0.5 + rand() * 1.2);
+    const x = rand() * canvasWidth * 0.8;
+    const y = rand() * canvasHeight * 0.8;
+    const w = cellW * (0.8 + rand() * 1.2);
+    const h = cellH * (0.8 + rand() * 1.0);
     addShape({
       id: makeId('cross'),
       type,
@@ -143,32 +151,8 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
       width: w,
       height: h,
       color,
-      rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) : (rand() < 0.3 ? rand() * 90 : 0)),
+      rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) * 90 : (rand() < 0.35 ? rand() * 180 : 0)),
     });
-  }
-
-  for (let r = 0; r < GRID_ROWS; r++) {
-    for (let c = 0; c < GRID_COLS; c++) {
-      if (grid[r][c].shapes.length < 3) {
-        const extraCount = 3 - grid[r][c].shapes.length + Math.floor(rand() * 2);
-        for (let e = 0; e < extraCount; e++) {
-          const type = pickType();
-          const color = pickRandom(colors, rand);
-          const cx = c * cellW;
-          const cy = r * cellH;
-          addShape({
-            id: makeId('fill'),
-            type,
-            x: cx + rand() * cellW * 0.5,
-            y: cy + rand() * cellH * 0.5,
-            width: cellW * (0.3 + rand() * 0.7),
-            height: cellH * (0.3 + rand() * 0.7),
-            color,
-            rotation: type === 'right-triangle' ? Math.floor(rand() * 4) : rand() * 360,
-          });
-        }
-      }
-    }
   }
 
   const targetRow = Math.floor(rand() * GRID_ROWS);
