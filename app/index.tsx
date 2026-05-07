@@ -63,7 +63,6 @@ export default function GameScreen() {
   );
   const [highlightCell, setHighlightCell] = useState<{ row: number; col: number } | null>(null);
   const [solved, setSolved] = useState(false);
-  const [score, setScore] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
   const [userRotation, setUserRotation] = useState(() => [0, 90, 180, 270][Math.floor(Math.random() * 4)]);
@@ -117,7 +116,6 @@ export default function GameScreen() {
     if (row === gameLevel.targetRow && col === gameLevel.targetCol) {
       setSolved(true);
       setHighlightCell({ row, col });
-      setScore(prev => prev + Math.max(100 - attempts * 20, 20));
       setAttempts(0);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       victoryOpacity.value = withSpring(1);
@@ -174,10 +172,20 @@ export default function GameScreen() {
       <View style={[styles.container, { paddingTop: topInset }, phoneFrame]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.scoreBadge}>
-            <Ionicons name="star" size={14} color={Colors.accentYellow} />
-            <Text style={styles.scoreText}>{score}</Text>
-          </View>
+          <Pressable
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                if ((window as any).history.length > 1) {
+                  (window as any).history.back();
+                } else {
+                  (window as any).close();
+                }
+              }
+            }}
+            style={({ pressed }) => [styles.exitButton, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="close" size={22} color={Colors.textSecondary} />
+          </Pressable>
           <Pressable
             onPress={() => setMusicPlaying(prev => !prev)}
             style={({ pressed }) => [
@@ -280,7 +288,6 @@ export default function GameScreen() {
               <Ionicons name="checkmark-circle" size={36} color={Colors.accentGreen} />
             </View>
             <Text style={styles.victoryText}>מצוין!</Text>
-            <Text style={styles.victoryScore}>+{Math.max(100 - (attempts) * 20, 20)} נקודות</Text>
             <Pressable
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -293,6 +300,20 @@ export default function GameScreen() {
             >
               <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
               <Text style={styles.nextButtonText}>שלב הבא</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  if ((window as any).history.length > 1) {
+                    (window as any).history.back();
+                  } else {
+                    (window as any).close();
+                  }
+                }
+              }}
+              style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.exitLink}>יציאה מהפעילות</Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -367,19 +388,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik_700Bold',
     color: Colors.accentBlue,
   },
-  scoreBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  scoreText: {
-    fontSize: 14,
-    fontFamily: 'Rubik_700Bold',
-    color: Colors.accentYellow,
+  exitButton: {
+    padding: 4,
   },
   boardContainer: {
     alignItems: 'center',
@@ -472,11 +482,13 @@ const styles = StyleSheet.create({
     color: Colors.text,
     writingDirection: 'rtl',
   },
-  victoryScore: {
-    fontSize: 16,
-    fontFamily: 'Rubik_500Medium',
-    color: Colors.accentGreen,
+  exitLink: {
+    fontSize: 14,
+    fontFamily: 'Rubik_400Regular',
+    color: Colors.textSecondary,
     writingDirection: 'rtl',
+    textDecorationLine: 'underline',
+    marginTop: 4,
   },
   nextButton: {
     flexDirection: 'row',
