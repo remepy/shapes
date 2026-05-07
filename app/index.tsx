@@ -311,9 +311,9 @@ export default function GameScreen() {
                   }
                 }
               }}
-              style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+              style={({ pressed }) => [styles.exitLink, pressed && { opacity: 0.6 }]}
             >
-              <Text style={styles.exitLink}>יציאה מהפעילות</Text>
+              <Text style={styles.exitLinkText}>יציאה מהפעילות</Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -466,42 +466,55 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   victoryContent: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     backgroundColor: Colors.surface,
-    paddingHorizontal: 32,
-    paddingVertical: 24,
-    borderRadius: 20,
-    gap: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    borderRadius: 24,
+    gap: 16,
+    width: 300,
   },
   victoryIconRow: {
+    alignItems: 'center',
     marginBottom: 4,
   },
   victoryText: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Rubik_700Bold',
     color: Colors.text,
     writingDirection: 'rtl',
+    textAlign: 'center',
   },
   exitLink: {
-    fontSize: 14,
-    fontFamily: 'Rubik_400Regular',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.textSecondary,
+    minHeight: 60,
+  },
+  exitLinkText: {
+    fontSize: 17,
+    fontFamily: 'Rubik_500Medium',
     color: Colors.textSecondary,
     writingDirection: 'rtl',
-    textDecorationLine: 'underline',
-    marginTop: 4,
+    textAlign: 'center',
   },
   nextButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: Colors.accentBlue,
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-    gap: 8,
-    marginTop: 8,
+    paddingVertical: 18,
+    borderRadius: 20,
+    gap: 10,
+    minHeight: 60,
   },
   nextButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: 'Rubik_700Bold',
     color: '#FFFFFF',
     writingDirection: 'rtl',
