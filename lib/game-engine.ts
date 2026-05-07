@@ -106,36 +106,52 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
     }
   }
 
-  // Pass 2: exactly one main shape per cell, jittered within the cell for variety
+  // Pass 2: two shapes per cell — one large main, one smaller accent
   for (let r = 0; r < GRID_ROWS; r++) {
     for (let c = 0; c < GRID_COLS; c++) {
       const cx = c * cellW;
       const cy = r * cellH;
-      const type = pickType();
-      const color = pickRandom(colors, rand);
-      // Size: 50–85% of cell, randomly varied
-      const w = cellW * (0.5 + rand() * 0.35);
-      const h = cellH * (0.5 + rand() * 0.35);
-      // Position: centered in cell with up to ±20% jitter
-      const jitterX = (rand() - 0.5) * cellW * 0.4;
-      const jitterY = (rand() - 0.5) * cellH * 0.4;
-      const x = cx + (cellW - w) / 2 + jitterX;
-      const y = cy + (cellH - h) / 2 + jitterY;
+
+      // Main shape: 50–85% of cell size, centered with gentle jitter
+      const type1 = pickType();
+      const color1 = pickRandom(colors, rand);
+      const w1 = cellW * (0.5 + rand() * 0.35);
+      const h1 = cellH * (0.5 + rand() * 0.35);
+      const jx1 = (rand() - 0.5) * cellW * 0.4;
+      const jy1 = (rand() - 0.5) * cellH * 0.4;
       addShape({
         id: makeId('cell'),
-        type,
-        x,
-        y,
-        width: w,
-        height: h,
-        color,
-        rotation: type === 'triangle' ? rand() * 360 : (type === 'right-triangle' ? Math.floor(rand() * 4) * 90 : (rand() < 0.35 ? rand() * 180 : 0)),
+        type: type1,
+        x: cx + (cellW - w1) / 2 + jx1,
+        y: cy + (cellH - h1) / 2 + jy1,
+        width: w1,
+        height: h1,
+        color: color1,
+        rotation: type1 === 'triangle' ? rand() * 360 : (type1 === 'right-triangle' ? Math.floor(rand() * 4) * 90 : (rand() < 0.35 ? rand() * 180 : 0)),
+      });
+
+      // Accent shape: 25–45% of cell size, placed in a random corner quadrant
+      const type2 = pickType();
+      const color2 = pickRandom(colors, rand);
+      const w2 = cellW * (0.25 + rand() * 0.2);
+      const h2 = cellH * (0.25 + rand() * 0.2);
+      const quadX = rand() < 0.5 ? 0 : cellW - w2;
+      const quadY = rand() < 0.5 ? 0 : cellH - h2;
+      addShape({
+        id: makeId('accent'),
+        type: type2,
+        x: cx + quadX + (rand() - 0.5) * cellW * 0.15,
+        y: cy + quadY + (rand() - 0.5) * cellH * 0.15,
+        width: w2,
+        height: h2,
+        color: color2,
+        rotation: type2 === 'triangle' ? rand() * 360 : (type2 === 'right-triangle' ? Math.floor(rand() * 4) * 90 : (rand() < 0.35 ? rand() * 180 : 0)),
       });
     }
   }
 
-  // Pass 3: a small number of large cross-cell accent shapes for visual interest
-  const crossCount = 4 + Math.floor(rand() * 3);
+  // Pass 3: cross-cell accent shapes for visual interest
+  const crossCount = 22 + Math.floor(rand() * 7);
   for (let i = 0; i < crossCount; i++) {
     const type = pickType();
     const color = pickRandom(colors, rand);
