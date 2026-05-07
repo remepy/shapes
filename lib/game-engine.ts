@@ -117,11 +117,13 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
       const h = cellH * (0.5 + rand() * 0.35);
       const jitterX = (rand() - 0.5) * cellW * 0.4;
       const jitterY = (rand() - 0.5) * cellH * 0.4;
+      const rawX = cx + (cellW - w) / 2 + jitterX;
+      const rawY = cy + (cellH - h) / 2 + jitterY;
       addShape({
         id: makeId('cell'),
         type,
-        x: cx + (cellW - w) / 2 + jitterX,
-        y: cy + (cellH - h) / 2 + jitterY,
+        x: Math.max(cx, Math.min(cx + cellW - w, rawX)),
+        y: Math.max(cy, Math.min(cy + cellH - h, rawY)),
         width: w,
         height: h,
         color,
