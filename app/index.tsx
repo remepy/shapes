@@ -393,18 +393,21 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   headerLeft: {
-    flex: 1,
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    zIndex: 2,
   },
   headerCenter: {
-    flex: 2,
+    flex: 1,
     alignItems: 'center',
+    minWidth: 0,
   },
   headerRight: {
-    flex: 1,
+    flexShrink: 0,
     alignItems: 'flex-end',
+    zIndex: 2,
   },
   title: {
     fontSize: 18,
