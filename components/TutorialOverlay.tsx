@@ -79,13 +79,13 @@ export function TutorialOverlay({
           </Pressable>
           {waitingForAction ? (
             <View style={styles.waitPill}>
-              <Ionicons name="hand-left-outline" size={16} color={Colors.accentYellow} />
+              <Ionicons name="hand-left-outline" size={20} color={Colors.accentYellow} />
               <Text style={styles.waitText}>{ACTION_LABEL[step.action]}</Text>
             </View>
           ) : (
             <Pressable onPress={onNext} style={({ pressed }) => [styles.nextButton, pressed && { opacity: 0.8 }]}>
               <Text style={styles.nextText}>הבא</Text>
-              <Ionicons name="arrow-back" size={18} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
             </Pressable>
           )}
         </View>
@@ -140,9 +140,9 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     backgroundColor: Colors.surface,
     borderRadius: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 214, 10, 0.5)',
     shadowColor: '#000',
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 18,
+    fontSize: 24,
     fontFamily: 'Rubik_700Bold',
     color: Colors.accentYellow,
     writingDirection: 'rtl',
@@ -168,21 +168,21 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     backgroundColor: Colors.surfaceLight,
   },
   dotActive: {
     backgroundColor: Colors.accentYellow,
-    width: 18,
+    width: 22,
   },
   dotDone: {
     backgroundColor: Colors.accentGreen,
   },
   body: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 20,
+    lineHeight: 30,
     fontFamily: 'Rubik_400Regular',
     color: Colors.text,
     writingDirection: 'rtl',
@@ -199,13 +199,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: Colors.accentBlue,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 14,
-    minHeight: 44,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 16,
+    minHeight: 56,
   },
   nextText: {
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: 'Rubik_700Bold',
     color: '#FFFFFF',
     writingDirection: 'rtl',
@@ -214,26 +214,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 214, 10, 0.12)',
-    minHeight: 44,
+    minHeight: 56,
   },
   waitText: {
-    fontSize: 14,
+    fontSize: 17,
     fontFamily: 'Rubik_500Medium',
     color: Colors.accentYellow,
     writingDirection: 'rtl',
   },
   skipButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    minHeight: 44,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 56,
     justifyContent: 'center',
   },
   skipText: {
-    fontSize: 15,
+    fontSize: 18,
     fontFamily: 'Rubik_400Regular',
     color: Colors.textSecondary,
     writingDirection: 'rtl',
