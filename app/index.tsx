@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
+import { setAudioModeAsync, useAudioPlayer } from 'expo-audio';
 import { GameBoard, GoalTile } from '@/components/GameBoard';
 import { generateLevel, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
 import Colors from '@/constants/colors';
@@ -69,7 +69,7 @@ export default function GameScreen() {
   const [hintLevel, setHintLevel] = useState(0);
   const [userRotation, setUserRotation] = useState(() => [0, 90, 180, 270][Math.floor(Math.random() * 4)]);
   const [musicPlaying, setMusicPlaying] = useState(true);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const musicPlayer = useAudioPlayer(require('@/assets/background-music.mp3'));
   const tutorial = useTutorial();
   const tutorialStep = tutorial.step;
   const tutorialFocus = tutorialStep?.focus ?? null;
@@ -80,31 +80,18 @@ export default function GameScreen() {
   const hintEnabled = !tutorialStep || tutorialAction === 'hint' || tutorialAction === 'tap';
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-        const { sound } = await Audio.Sound.createAsync(
-          require('@/assets/background-music.mp3'),
-          { isLooping: true, shouldPlay: true, volume: 0.4 }
-        );
-        if (mounted) soundRef.current = sound;
-      } catch {}
-    })();
-    return () => {
-      mounted = false;
-      soundRef.current?.unloadAsync();
-    };
-  }, []);
+    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+    musicPlayer.loop = true;
+    musicPlayer.volume = 0.4;
+  }, [musicPlayer]);
 
   useEffect(() => {
-    if (!soundRef.current) return;
     if (musicPlaying) {
-      soundRef.current.playAsync();
+      musicPlayer.play();
     } else {
-      soundRef.current.pauseAsync();
+      musicPlayer.pause();
     }
-  }, [musicPlaying]);
+  }, [musicPlaying, musicPlayer]);
 
   const victoryOpacity = useSharedValue(0);
   const shakeX = useSharedValue(0);
