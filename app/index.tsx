@@ -22,6 +22,8 @@ import { Audio } from 'expo-av';
 import { GameBoard, GoalTile } from '@/components/GameBoard';
 import { generateLevel, GRID_DIMENSIONS, GameLevel } from '@/lib/game-engine';
 import Colors from '@/constants/colors';
+import { useTutorial } from '@/hooks/useTutorial';
+import { TutorialOverlay, TutorialSpotlight } from '@/components/TutorialOverlay';
 
 const { width: RAW_SCREEN_WIDTH, height: RAW_SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -68,6 +70,14 @@ export default function GameScreen() {
   const [userRotation, setUserRotation] = useState(() => [0, 90, 180, 270][Math.floor(Math.random() * 4)]);
   const [musicPlaying, setMusicPlaying] = useState(true);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const tutorial = useTutorial();
+  const tutorialStep = tutorial.step;
+  const tutorialFocus = tutorialStep?.focus ?? null;
+  const tutorialAction = tutorialStep?.action ?? null;
+  // Which controls the player may use during the tutorial
+  const boardEnabled = !tutorialStep || tutorialAction === 'tap';
+  const rotateEnabled = !tutorialStep || tutorialAction === 'rotate' || tutorialAction === 'tap';
+  const hintEnabled = !tutorialStep || tutorialAction === 'hint' || tutorialAction === 'tap';
 
   useEffect(() => {
     let mounted = true;
@@ -112,13 +122,14 @@ export default function GameScreen() {
   }, []);
 
   const handleCellTap = useCallback((row: number, col: number) => {
-    if (solved) return;
+    if (solved || !boardEnabled) return;
     if (row === gameLevel.targetRow && col === gameLevel.targetCol) {
       setSolved(true);
       setHighlightCell({ row, col });
       setAttempts(0);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       victoryOpacity.value = withSpring(1);
+      tutorial.notify('tap');
     } else {
       setAttempts(prev => prev + 1);
       setHighlightCell({ row, col });
@@ -130,7 +141,27 @@ export default function GameScreen() {
       );
       setTimeout(() => setHighlightCell(null), 400);
     }
-  }, [solved, gameLevel, attempts]);
+  }, [solved, gameLevel, boardEnabled, tutorial.notify]);
+
+  const handleHintPress = useCallback(() => {
+    if (!hintEnabled) return;
+    setHintLevel(prev => Math.min(prev + 1, 2));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tutorial.notify('hint');
+  }, [hintEnabled, tutorial.notify]);
+
+  const handleRotatePress = useCallback(() => {
+    if (!rotateEnabled) return;
+    setUserRotation(prev => (prev + 90) % 360);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    tutorial.notify('rotate');
+  }, [rotateEnabled, tutorial.notify]);
+
+  const openTutorial = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    startNewLevel(currentLevel);
+    tutorial.start();
+  }, [startNewLevel, currentLevel, tutorial.start]);
 
   const tileShakeStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: shakeX.value }],
@@ -152,10 +183,10 @@ export default function GameScreen() {
         canvasWidth={CANVAS_WIDTH}
         canvasHeight={CANVAS_HEIGHT}
         highlightCell={highlight}
-        showTarget={hintLevel >= 2}
+        showTarget={hintLevel >= 2 || tutorialAction === 'tap'}
       />
     );
-  }, [gameLevel, highlightCell, solved, hintLevel]);
+  }, [gameLevel, highlightCell, solved, hintLevel, tutorialAction]);
 
   const phoneFrame = IS_DESKTOP_WEB ? {
     width: PHONE_WIDTH,
@@ -199,6 +230,13 @@ export default function GameScreen() {
               color={musicPlaying ? Colors.accentYellow : Colors.textSecondary}
             />
           </Pressable>
+          <Pressable
+            onPress={openTutorial}
+            accessibilityLabel="הדרכה"
+            style={({ pressed }) => [styles.musicToggle, pressed && { opacity: 0.6 }]}
+          >
+            <Ionicons name="help-circle-outline" size={22} color={Colors.textSecondary} />
+          </Pressable>
         </View>
         <View style={styles.headerCenter}>
           <Text style={styles.title}>צורות בצרורות</Text>
@@ -210,10 +248,11 @@ export default function GameScreen() {
         </View>
       </View>
 
-      <View style={styles.boardContainer}>
+      <View style={[styles.boardContainer, tutorialStep && tutorialFocus !== 'board' && styles.dimmed]}>
         <View style={{ position: 'relative' }}>
           {highlightedBoard}
-          {!solved && (
+          {tutorialFocus === 'board' && <TutorialSpotlight radius={6} />}
+          {!solved && boardEnabled && (
             <View style={StyleSheet.absoluteFill}>
               {Array.from({ length: GRID_DIMENSIONS.rows }, (_, row) => (
                 <View key={row} style={{ flex: 1, flexDirection: 'row' }}>
@@ -239,8 +278,9 @@ export default function GameScreen() {
       <View style={[styles.bottomArea, { paddingBottom: bottomInset + 8 }]}>
         {!solved ? (
           <View style={styles.goalArea}>
-            <Text style={styles.goalCaption}>לחצו על התא שמכיל את הצורה הבאה:</Text>
-            <Animated.View style={tileShakeStyle}>
+            <Text style={[styles.goalCaption, tutorialStep && tutorialFocus !== 'goal' && styles.dimmed]}>לחצו על התא שמכיל את הצורה הבאה:</Text>
+            <Animated.View style={[tileShakeStyle, tutorialStep && tutorialFocus !== 'goal' && styles.dimmed]}>
+              {tutorialFocus === 'goal' && <TutorialSpotlight radius={12} />}
               <GoalTile
                 level={gameLevel}
                 canvasWidth={CANVAS_WIDTH}
@@ -252,35 +292,46 @@ export default function GameScreen() {
             </Animated.View>
             <View style={styles.goalActions}>
               <Pressable
-                onPress={() => {
-                  setHintLevel(prev => Math.min(prev + 1, 2));
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
+                onPress={handleHintPress}
+                disabled={!hintEnabled}
                 style={({ pressed }) => [
                   styles.hintButton,
                   pressed && { opacity: 0.6 },
                   hintLevel > 0 && styles.hintButtonActive,
+                  tutorialStep && tutorialFocus !== 'hint' && styles.dimmed,
                 ]}
               >
+                {tutorialFocus === 'hint' && <TutorialSpotlight radius={42} />}
                 <MaterialCommunityIcons name="lightbulb-outline" size={40} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
               </Pressable>
               <Pressable
-                onPress={() => {
-                  const next = (userRotation + 90) % 360;
-                  setUserRotation(next);
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }}
+                onPress={handleRotatePress}
+                disabled={!rotateEnabled}
                 style={({ pressed }) => [
                   styles.rotateButton,
                   pressed && { opacity: 0.6 },
+                  tutorialStep && tutorialFocus !== 'rotate' && styles.dimmed,
                 ]}
               >
+                {tutorialFocus === 'rotate' && <TutorialSpotlight radius={42} />}
                 <MaterialCommunityIcons name="rotate-right" size={40} color={Colors.text} />
               </Pressable>
             </View>
           </View>
         ) : null}
       </View>
+      {tutorialStep && !solved && (
+        <TutorialOverlay
+          step={tutorialStep}
+          stepIndex={tutorial.stepIndex}
+          totalSteps={tutorial.totalSteps}
+          placement={tutorialFocus === 'board' ? 'bottom' : 'top'}
+          topOffset={topInset + HEADER_HEIGHT + 8}
+          bottomOffset={bottomInset + 8}
+          onNext={tutorial.next}
+          onSkip={tutorial.skip}
+        />
+      )}
       {solved && (
         <Animated.View style={[styles.victoryOverlay, victoryStyle]}>
           <View style={styles.victoryContent}>
@@ -453,6 +504,9 @@ const styles = StyleSheet.create({
   },
   musicToggle: {
     padding: 4,
+  },
+  dimmed: {
+    opacity: 0.35,
   },
   victoryOverlay: {
     position: 'absolute',
