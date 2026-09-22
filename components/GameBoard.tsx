@@ -181,18 +181,31 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
           />
         )}
 
-        {showTarget && (
-          <Rect
-            x={level.targetCol * cellW}
-            y={level.targetRow * cellH}
-            width={cellW}
-            height={cellH}
-            fill="none"
-            stroke={Colors.accentGreen}
-            strokeWidth={3}
-            strokeDasharray="8,4"
-          />
-        )}
+        {showTarget && (() => {
+          // Strokes are centred on the path, so inset by half the outer stroke
+          // to keep the whole frame visible on cells at the board edges.
+          const inset = 4.5;
+          const x = level.targetCol * cellW + inset;
+          const y = level.targetRow * cellH + inset;
+          const w = cellW - inset * 2;
+          const h = cellH - inset * 2;
+          return (
+            <>
+              {/* Black backing edge keeps the white frame visible over light artwork. */}
+              <Rect x={x} y={y} width={w} height={h} fill="none" stroke="#000000" strokeWidth={9} />
+              <Rect
+                x={x}
+                y={y}
+                width={w}
+                height={h}
+                fill="none"
+                stroke="#FFFFFF"
+                strokeWidth={5}
+                strokeDasharray="14,10"
+              />
+            </>
+          );
+        })()}
       </Svg>
     </View>
   );

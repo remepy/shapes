@@ -208,10 +208,13 @@ function configureExpoAndLanding(app: express.Application) {
 
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app.use("/assets/node_modules", express.static(path.resolve(process.cwd(), "node_modules")));
-  app.use(express.static(path.resolve(process.cwd(), "static-build")));
+  // Generated build output only: bundled asset paths include pnpm's `.pnpm/`
+  // directory, which express.static skips by default. Scoped to the build
+  // roots so no dotfiles in the source tree or node_modules become public.
+  app.use(express.static(path.resolve(process.cwd(), "static-build"), { dotfiles: "allow" }));
 
   if (hasWebBuild) {
-    app.use(express.static(webDistPath));
+    app.use(express.static(webDistPath, { dotfiles: "allow" }));
     app.get("/{*path}", (req: Request, res: Response, next: NextFunction) => {
       if (req.path.startsWith("/api")) return next();
       const indexPath = path.join(webDistPath, "index.html");

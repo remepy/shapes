@@ -1,0 +1,1 @@
+- [Web preview build pipeline](web-preview-build.md) — preview serves a prebuilt dist export, not Metro; white screen usually means a font/asset 404, not a crash.
