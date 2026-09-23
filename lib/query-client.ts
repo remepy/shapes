@@ -1,4 +1,5 @@
 import { fetch } from "expo/fetch";
+import { Platform } from "react-native";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 /**
@@ -9,6 +10,12 @@ export function getApiUrl(): string {
   let host = process.env.EXPO_PUBLIC_DOMAIN;
 
   if (!host) {
+    // On the web the app is served by the same Express server that hosts the
+    // API, so the current origin is always correct. This also lets the web
+    // export be built without knowing the deployment domain ahead of time.
+    if (Platform.OS === "web" && typeof window !== "undefined" && window.location?.origin) {
+      return new URL(window.location.origin).href;
+    }
     throw new Error("EXPO_PUBLIC_DOMAIN is not set");
   }
 

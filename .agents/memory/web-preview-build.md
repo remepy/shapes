@@ -10,8 +10,12 @@ Metro (the Expo dev server) runs too, but the preview does **not** use it — ed
 relying on fast refresh will NOT change what the preview shows.
 
 **How to apply:** after changing app code, re-run the web export before screenshotting or judging the preview.
-The export must be run with `EXPO_PUBLIC_DOMAIN` set (same value the dev script uses), because the query
-client throws at startup when that variable is missing, which produces a blank white page with no console error.
+The published deployment has the same dependency: if its build step does not produce the web export, the
+server falls back to the Expo Go landing page and mobile browsers can never reach the game. Any change to
+how the web export is produced must be mirrored in the publish build command, not just the dev workflow.
+
+The web build no longer needs a domain baked in — on web the API base falls back to the current origin,
+since the same Express server serves both the app and the API. Native bundles still need the domain env var.
 
 **Why (blank-page traps seen in practice):**
 - The root layout returns `null` until the Rubik fonts resolve, so *any* font 404 renders an all-white app with no error output. A white screen here almost always means an asset request is failing, not a React crash.
