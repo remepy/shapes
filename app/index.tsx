@@ -312,7 +312,14 @@ export default function GameScreen() {
           step={tutorialStep}
           stepIndex={tutorial.stepIndex}
           totalSteps={tutorial.totalSteps}
-          placement={tutorialFocus === 'board' ? 'bottom' : 'top'}
+          placement={
+            // The card sits over the board's lower rows when anchored at the
+            // bottom, so if the target cell is in the lower half of the grid
+            // move it to the top instead so the frame stays fully visible.
+            tutorialFocus === 'board' && gameLevel.targetRow < GRID_DIMENSIONS.rows / 2
+              ? 'bottom'
+              : 'top'
+          }
           topOffset={topInset + HEADER_HEIGHT + 8}
           bottomOffset={bottomInset + 8}
           onNext={tutorial.next}
