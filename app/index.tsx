@@ -285,7 +285,9 @@ export default function GameScreen() {
                   styles.hintButton,
                   pressed && { opacity: 0.6 },
                   hintLevel > 0 && styles.hintButtonActive,
-                  tutorialStep && tutorialFocus !== 'hint' && styles.dimmed,
+                  // Keep the bulb bright whenever the step is waiting for a hint tap,
+                  // even when the spotlight is on the goal tile.
+                  tutorialStep && tutorialFocus !== 'hint' && tutorialAction !== 'hint' && styles.dimmed,
                 ]}
               >
                 {tutorialFocus === 'hint' && <TutorialSpotlight radius={42} />}
