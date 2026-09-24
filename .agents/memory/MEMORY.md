@@ -1,2 +1,0 @@
-- [Web preview build pipeline](web-preview-build.md) — preview serves a prebuilt dist export, not Metro; white screen usually means a font/asset 404, not a crash.
-- [Expo upgrade checks](expo-sdk-upgrade-checks.md) — `expo install --check` passes while native modules are duplicated and the babel preset is unresolvable; run expo-doctor and bundle before calling a bump done.
