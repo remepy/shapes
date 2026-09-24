@@ -186,7 +186,7 @@ export default function GameScreen() {
   } : undefined;
 
   return (
-    <View style={IS_DESKTOP_WEB ? styles.desktopWrapper : undefined}>
+    <View style={IS_DESKTOP_WEB ? styles.desktopWrapper : styles.mobileWrapper}>
       <View style={[styles.container, { paddingTop: topInset }, phoneFrame]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -376,6 +376,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  mobileWrapper: {
+    flex: 1,
+    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
