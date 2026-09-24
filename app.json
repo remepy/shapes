@@ -27,22 +27,15 @@
       }
     },
     "web": {
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "output": "single"
     },
     "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://replit.com/"
-        }
-      ],
       "expo-font",
-      "expo-web-browser",
       "expo-audio",
       "expo-asset"
     ],
     "experiments": {
-      "typedRoutes": true,
       "reactCompiler": true
     }
   }

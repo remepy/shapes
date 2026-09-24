@@ -39,3 +39,6 @@ yarn-error.*
 .vercel
 
 .env
+
+# dev-only copy made by scripts/use-lang.mjs
+public/translations.json

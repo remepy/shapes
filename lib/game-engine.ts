@@ -44,12 +44,14 @@ function pickRandom<T>(arr: T[], rand: () => number): T {
   return arr[Math.floor(rand() * arr.length)];
 }
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-}
-
-export function generateLevel(level: number, canvasWidth: number, canvasHeight: number): GameLevel {
-  const rand = seededRandom(Math.floor(Math.random() * 2147483646) + 1);
+/**
+ * Builds the board for one catalogue level. The same seed always produces the
+ * same board (positions scale with the canvas size), so a levelId from the app
+ * maps to exactly one puzzle.
+ */
+export function generateLevel(seed: number, canvasWidth: number, canvasHeight: number): GameLevel {
+  const rand = seededRandom(seed);
+  const level = seed;
   const cellW = canvasWidth / GRID_COLS;
   const cellH = canvasHeight / GRID_ROWS;
   const shapes: GameShape[] = [];
@@ -82,7 +84,7 @@ export function generateLevel(level: number, canvasWidth: number, canvasHeight: 
   };
 
   let shapeIdx = 0;
-  const makeId = (tag: string) => generateId() + '_' + tag + '_' + (shapeIdx++);
+  const makeId = (tag: string) => 's' + seed + '_' + tag + '_' + (shapeIdx++);
   const nonStripeTypes: ShapeType[] = ['rect', 'circle', 'triangle', 'right-triangle'];
   const pickType = (): ShapeType => {
     if (rand() < 0.2) return 'stripe';

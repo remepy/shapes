@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { TranslationKey } from '@/lib/i18n';
 
 const TUTORIAL_SEEN_KEY = 'shapes_tutorial_seen_v1';
 
@@ -7,58 +8,40 @@ export type TutorialFocus = 'goal' | 'board' | 'rotate' | 'hint';
 export type TutorialAction = 'next' | 'rotate' | 'hint' | 'tap';
 
 export interface TutorialStep {
-  title: string;
-  body: string;
+  titleKey: TranslationKey;
+  bodyKey: TranslationKey;
   focus: TutorialFocus;
   /** What the player must do to advance. */
   action: TutorialAction;
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    title: 'המטרה',
-    body: 'בתחתית המסך מוצגת צורה. המשימה שלכם: למצוא את התא בלוח שמכיל בדיוק את הצורה הזו.',
-    focus: 'goal',
-    action: 'next',
-  },
-  {
-    title: 'הלוח',
-    body: 'הצורה מסתתרת באחד מ־24 התאים. בתמונה היא מופיעה באפור ואולי מסובבת, אז שימו לב לצורה ולא לצבע.',
-    focus: 'board',
-    action: 'next',
-  },
-  {
-    title: 'סיבוב',
-    body: 'התמונה עשויה להיות מסובבת ביחס ללוח. לחצו על כפתור הסיבוב כדי לסובב אותה.',
-    focus: 'rotate',
-    action: 'rotate',
-  },
-  {
-    title: 'רמז',
-    body: 'נתקעתם? לחיצה על הנורה חושפת את הצבעים, ולחיצה שנייה מסמנת את התא הנכון. לחצו עליה פעם אחת.',
-    focus: 'hint',
-    action: 'hint',
-  },
-  {
-    title: 'הצבעים נחשפו',
-    body: 'שימו לב: הצורה שלמטה מוצגת עכשיו בצבעים האמיתיים שלה, וכך קל יותר למצוא אותה בלוח. לחצו על הנורה פעם שנייה כדי לסמן את התא הנכון.',
-    focus: 'goal',
-    action: 'hint',
-  },
-  {
-    title: 'נסו בעצמכם',
-    body: 'התא הנכון מסומן במסגרת לבנה מקווקוות. לחצו עליו! טעויות נספרות כניסיונות, ופגיעה מעבירה לשלב הבא.',
-    focus: 'board',
-    action: 'tap',
-  },
+  { titleKey: 'tutorial_goal_title', bodyKey: 'tutorial_goal_body', focus: 'goal', action: 'next' },
+  { titleKey: 'tutorial_board_title', bodyKey: 'tutorial_board_body', focus: 'board', action: 'next' },
+  { titleKey: 'tutorial_rotate_title', bodyKey: 'tutorial_rotate_body', focus: 'rotate', action: 'rotate' },
+  { titleKey: 'tutorial_hint_title', bodyKey: 'tutorial_hint_body', focus: 'hint', action: 'hint' },
+  { titleKey: 'tutorial_colors_title', bodyKey: 'tutorial_colors_body', focus: 'goal', action: 'hint' },
+  { titleKey: 'tutorial_try_title', bodyKey: 'tutorial_try_body', focus: 'board', action: 'tap' },
 ];
 
-export function useTutorial() {
+/**
+ * @param seenFromApp session_start.tutorialSeen. When provided it is
+ *   authoritative (BR-06); null means standalone, so use the stored flag.
+ */
+export function useTutorial(seenFromApp: boolean | null) {
   const [active, setActive] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    if (seenFromApp !== null) {
+      if (!seenFromApp) {
+        setStepIndex(0);
+        setActive(true);
+      }
+      setLoaded(true);
+      return;
+    }
     let mounted = true;
     AsyncStorage.getItem(TUTORIAL_SEEN_KEY)
       .then((value) => {
@@ -75,7 +58,7 @@ export function useTutorial() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [seenFromApp]);
 
   const markSeen = useCallback(() => {
     AsyncStorage.setItem(TUTORIAL_SEEN_KEY, '1').catch(() => {});

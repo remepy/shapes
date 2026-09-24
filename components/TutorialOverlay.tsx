@@ -8,9 +8,11 @@ import Animated, {
   withRepeat,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import Colors from '@/constants/colors';
 import type { TutorialStep } from '@/hooks/useTutorial';
+import { useI18n, TranslationKey } from '@/lib/i18n';
+import { useReducedMotion } from '@/lib/motion';
 
 interface TutorialOverlayProps {
   step: TutorialStep;
@@ -34,15 +36,25 @@ export function TutorialOverlay({
   onNext,
   onSkip,
 }: TutorialOverlayProps) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(placement === 'top' ? -12 : 12);
+  const { t, isRTL } = useI18n();
+  const reducedMotion = useReducedMotion();
+  const opacity = useSharedValue(reducedMotion ? 1 : 0);
+  const translateY = useSharedValue(reducedMotion ? 0 : placement === 'top' ? -12 : 12);
 
   useEffect(() => {
+    if (reducedMotion) {
+      opacity.value = 1;
+      translateY.value = 0;
+      return;
+    }
     opacity.value = 0;
     translateY.value = placement === 'top' ? -12 : 12;
     opacity.value = withTiming(1, { duration: 220 });
     translateY.value = withTiming(0, { duration: 220 });
-  }, [stepIndex, placement, opacity, translateY]);
+  }, [stepIndex, placement, opacity, translateY, reducedMotion]);
+
+  const row = { flexDirection: isRTL ? 'row-reverse' : 'row' } as const;
+  const text = { writingDirection: isRTL ? 'rtl' : 'ltr', textAlign: isRTL ? 'right' : 'left' } as const;
 
   const cardStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -61,9 +73,9 @@ export function TutorialOverlay({
       ]}
     >
       <View style={styles.card}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>{step.title}</Text>
-          <View style={styles.dots}>
+        <View style={[styles.headerRow, row]}>
+          <Text style={[styles.title, text]}>{t(step.titleKey)}</Text>
+          <View style={[styles.dots, row]}>
             {Array.from({ length: totalSteps }, (_, i) => (
               <View
                 key={i}
@@ -72,20 +84,20 @@ export function TutorialOverlay({
             ))}
           </View>
         </View>
-        <Text style={styles.body}>{step.body}</Text>
-        <View style={styles.actions}>
+        <Text style={[styles.body, text]}>{t(step.bodyKey)}</Text>
+        <View style={[styles.actions, row]}>
           <Pressable onPress={onSkip} style={({ pressed }) => [styles.skipButton, pressed && { opacity: 0.6 }]}>
-            <Text style={styles.skipText}>דלג</Text>
+            <Text style={[styles.skipText, text]}>{t('tutorial_skip')}</Text>
           </Pressable>
           {waitingForAction ? (
-            <View style={styles.waitPill}>
+            <View style={[styles.waitPill, row]}>
               <Ionicons name="hand-left-outline" size={20} color={Colors.accentYellow} />
-              <Text style={styles.waitText}>{ACTION_LABEL[step.action]}</Text>
+              <Text style={[styles.waitText, text]}>{step.action !== 'next' && t(ACTION_LABEL[step.action])}</Text>
             </View>
           ) : (
-            <Pressable onPress={onNext} style={({ pressed }) => [styles.nextButton, pressed && { opacity: 0.8 }]}>
-              <Text style={styles.nextText}>הבא</Text>
-              <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+            <Pressable onPress={onNext} style={({ pressed }) => [styles.nextButton, row, pressed && { opacity: 0.8 }]}>
+              <Text style={[styles.nextText, text]}>{t('tutorial_next')}</Text>
+              <Ionicons name={isRTL ? 'arrow-back' : 'arrow-forward'} size={22} color="#FFFFFF" />
             </Pressable>
           )}
         </View>
@@ -94,17 +106,18 @@ export function TutorialOverlay({
   );
 }
 
-const ACTION_LABEL: Record<TutorialStep['action'], string> = {
-  next: '',
-  rotate: 'לחצו על כפתור הסיבוב',
-  hint: 'לחצו על הנורה',
-  tap: 'לחצו על התא המסומן',
+const ACTION_LABEL: Record<Exclude<TutorialStep['action'], 'next'>, TranslationKey> = {
+  rotate: 'tutorial_action_rotate',
+  hint: 'tutorial_action_hint',
+  tap: 'tutorial_action_tap',
 };
 
 /** Pulsing ring drawn around a focused element. Parent must be position: relative. */
 export function TutorialSpotlight({ radius = 16 }: { radius?: number }) {
+  const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
   useEffect(() => {
+    if (reducedMotion) return;
     scale.value = withRepeat(
       withSequence(
         withTiming(1.06, { duration: 600 }),
@@ -117,7 +130,7 @@ export function TutorialSpotlight({ radius = 16 }: { radius?: number }) {
       cancelAnimation(scale);
       scale.value = 1;
     };
-  }, [scale]);
+  }, [scale, reducedMotion]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
     <Animated.View
@@ -152,7 +165,6 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   headerRow: {
-    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -160,11 +172,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'Rubik_700Bold',
     color: Colors.accentYellow,
-    writingDirection: 'rtl',
-    textAlign: 'right',
   },
   dots: {
-    flexDirection: 'row-reverse',
     gap: 5,
   },
   dot: {
@@ -185,17 +194,13 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontFamily: 'Rubik_400Regular',
     color: Colors.text,
-    writingDirection: 'rtl',
-    textAlign: 'right',
   },
   actions: {
-    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 2,
   },
   nextButton: {
-    flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 6,
     backgroundColor: Colors.accentBlue,
@@ -208,10 +213,8 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Rubik_700Bold',
     color: '#FFFFFF',
-    writingDirection: 'rtl',
   },
   waitPill: {
-    flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 14,
@@ -224,7 +227,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: 'Rubik_500Medium',
     color: Colors.accentYellow,
-    writingDirection: 'rtl',
   },
   skipButton: {
     paddingHorizontal: 14,
@@ -236,7 +238,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Rubik_400Regular',
     color: Colors.textSecondary,
-    writingDirection: 'rtl',
   },
   spotlight: {
     position: 'absolute',

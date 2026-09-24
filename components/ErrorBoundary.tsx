@@ -1,54 +1,30 @@
-import React, { Component, ComponentType, PropsWithChildren } from "react";
-import { ErrorFallback, ErrorFallbackProps } from "@/components/ErrorFallback";
+import React, { Component, PropsWithChildren } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { send } from '@/lib/bridge';
+import Colors from '@/constants/colors';
 
-export type ErrorBoundaryProps = PropsWithChildren<{
-  FallbackComponent?: ComponentType<ErrorFallbackProps>;
-  onError?: (error: Error, stackTrace: string) => void;
-}>;
-
-type ErrorBoundaryState = { error: Error | null };
+type State = { failed: boolean };
 
 /**
- * This is a special case for for using the class components. Error boundaries must be class components because React only provides error boundary functionality through lifecycle methods (componentDidCatch and getDerivedStateFromError) which are not available in functional components.
- * https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
+ * Catches render errors, reports them to the app and shows an empty screen.
+ * Error text is never rendered to the participant (BR-10).
  */
+export class ErrorBoundary extends Component<PropsWithChildren, State> {
+  state: State = { failed: false };
 
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
-  state: ErrorBoundaryState = { error: null };
-
-  static defaultProps: {
-    FallbackComponent: ComponentType<ErrorFallbackProps>;
-  } = {
-    FallbackComponent: ErrorFallback,
-  };
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error };
+  static getDerivedStateFromError(): State {
+    return { failed: true };
   }
 
-  componentDidCatch(error: Error, info: { componentStack: string }): void {
-    if (typeof this.props.onError === "function") {
-      this.props.onError(error, info.componentStack);
-    }
+  componentDidCatch(error: Error): void {
+    send.error('render_error', error.message);
   }
-
-  resetError = (): void => {
-    this.setState({ error: null });
-  };
 
   render() {
-    const { FallbackComponent } = this.props;
-
-    return this.state.error && FallbackComponent ? (
-      <FallbackComponent
-        error={this.state.error}
-        resetError={this.resetError}
-      />
-    ) : (
-      this.props.children
-    );
+    return this.state.failed ? <View style={styles.blank} /> : this.props.children;
   }
 }
+
+const styles = StyleSheet.create({
+  blank: { flex: 1, backgroundColor: Colors.background },
+});
