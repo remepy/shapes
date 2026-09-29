@@ -169,6 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
+    flexShrink: 1,
     fontSize: 24,
     fontFamily: 'Rubik_700Bold',
     color: Colors.accentYellow,
@@ -215,6 +216,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   waitPill: {
+    flexShrink: 1,
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 14,
@@ -224,6 +226,7 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   waitText: {
+    flexShrink: 1,
     fontSize: 17,
     fontFamily: 'Rubik_500Medium',
     color: Colors.accentYellow,

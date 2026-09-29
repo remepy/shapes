@@ -28,7 +28,7 @@ shape. The app owns the level pointer (BR-03): the game never stores progress.
 |---|---|
 | Page loads | Fetches `./translations.json`, then posts `game_ready { gameId, protocolVersion: 1, locale }`. The screen stays empty until `session_start`. |
 | `session_start` | Checks `protocolVersion`, `expectedLocale` against its own locale (BR-14), and every level ID. Shows the tutorial only when `tutorialSeen` is `false`. |
-| Round solved, not the last | Posts `level_completed`, shows the success screen with **Next level** and **Exit activity**. |
+| Round solved, not the last | Posts `level_completed`, shows the success screen with **Next round** and **Exit activity**. |
 | Last round solved | Posts `level_completed`, shows the success screen with no buttons, then posts `game_finished` 1.5 s later. |
 | `pause` / `resume` | Music stops and all buttons are disabled / everything comes back. |
 | `abort` | Stops music and input, clears the screen, posts nothing further. |

@@ -47,8 +47,13 @@ const BASE_CANVAS_WIDTH = SCREEN_WIDTH - CANVAS_PADDING * 2;
 const CANVAS_ASPECT = 6 / 4;
 const BASE_CANVAS_HEIGHT = BASE_CANVAS_WIDTH * CANVAS_ASPECT;
 
-const HEADER_HEIGHT = 50;
-const GOAL_AREA_HEIGHT = 180;
+const HEADER_BAR_HEIGHT = 56;
+const ROUND_LINE_HEIGHT = 24;
+const HEADER_HEIGHT = HEADER_BAR_HEIGHT + ROUND_LINE_HEIGHT;
+const HEADER_BUTTON = SCREEN_WIDTH < 340 ? 44 : 48; // touch target for header icons
+const ROTATE_BUTTON = 58; // 20% smaller than the previous 72
+// caption + gap + goal tile (min 96 + frame) + gap + rotate button + padding
+const GOAL_AREA_HEIGHT = 26 + 10 + 104 + 10 + ROTATE_BUTTON + 8;
 const AVAILABLE_FOR_CANVAS = SCREEN_HEIGHT - WEB_TOP_INSET - WEB_BOTTOM_INSET - HEADER_HEIGHT - GOAL_AREA_HEIGHT;
 const SCALE_FACTOR = AVAILABLE_FOR_CANVAS < BASE_CANVAS_HEIGHT
   ? AVAILABLE_FOR_CANVAS / BASE_CANVAS_HEIGHT
@@ -280,6 +285,86 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
     borderColor: '#333',
   } : undefined;
 
+  const headerItems: { key: string; node: React.ReactNode }[] = [
+    {
+      key: 'exit',
+      node: (
+        <Pressable
+          onPress={handleExit}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_exit')}
+          style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons name="close" size={30} color={Colors.textSecondary} />
+        </Pressable>
+      ),
+    },
+    {
+      key: 'music',
+      node: (
+        <Pressable
+          onPress={() => setMusicPlaying(prev => !prev)}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_music')}
+          style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons
+            name={musicPlaying ? 'musical-notes' : 'musical-notes-outline'}
+            size={26}
+            color={musicPlaying ? Colors.accentYellow : Colors.textSecondary}
+          />
+        </Pressable>
+      ),
+    },
+    {
+      key: 'title',
+      node: (
+        <View style={styles.headerCenter}>
+          <Text style={[styles.title, textDir]} numberOfLines={1}>{t('title')}</Text>
+        </View>
+      ),
+    },
+    {
+      key: 'hint',
+      node: (
+        <Pressable
+          onPress={handleHintPress}
+          disabled={!hintEnabled}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_hint')}
+          style={({ pressed }) => [
+            styles.headerButton,
+            hintLevel > 0 && styles.hintButtonActive,
+            pressed && { opacity: 0.6 },
+            // Keep the bulb bright whenever the step is waiting for a hint tap,
+            // even when the spotlight is on the goal tile.
+            tutorialStep && tutorialFocus !== 'hint' && tutorialAction !== 'hint' && styles.dimmed,
+          ]}
+        >
+          {tutorialFocus === 'hint' && <TutorialSpotlight radius={HEADER_BUTTON / 2 + 6} />}
+          <MaterialCommunityIcons
+            name="lightbulb-outline"
+            size={28}
+            color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary}
+          />
+        </Pressable>
+      ),
+    },
+    {
+      key: 'help',
+      node: (
+        <Pressable
+          onPress={openTutorial}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y_tutorial')}
+          style={({ pressed }) => [styles.headerButton, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons name="help-circle-outline" size={30} color={Colors.textSecondary} />
+        </Pressable>
+      ),
+    },
+  ];
+
   // After the last round in app mode there is nothing more to press.
   const showNextButton = !isLastRound;
   const showPlayAgain = isLastRound && standalone;
@@ -288,50 +373,20 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
   return (
     <View style={IS_DESKTOP_WEB ? styles.desktopWrapper : styles.mobileWrapper}>
       <View style={[styles.container, { paddingTop: topInset }, phoneFrame]}>
+      {/*
+        Header, in visual order for Hebrew: X, music, title, hint, help.
+        English is the mirror image (X on the right). The row itself is
+        pinned to LTR so the order below is the order on screen.
+      */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Pressable
-            onPress={handleExit}
-            accessibilityRole="button"
-            accessibilityLabel={t('a11y_exit')}
-            style={({ pressed }) => [styles.exitButton, pressed && { opacity: 0.6 }]}
-          >
-            <Ionicons name="close" size={22} color={Colors.textSecondary} />
-          </Pressable>
-          <Pressable
-            onPress={() => setMusicPlaying(prev => !prev)}
-            accessibilityRole="button"
-            accessibilityLabel={t('a11y_music')}
-            style={({ pressed }) => [
-              styles.musicToggle,
-              pressed && { opacity: 0.6 },
-            ]}
-          >
-            <Ionicons
-              name={musicPlaying ? 'musical-notes' : 'musical-notes-outline'}
-              size={20}
-              color={musicPlaying ? Colors.accentYellow : Colors.textSecondary}
-            />
-          </Pressable>
-          <Pressable
-            onPress={openTutorial}
-            accessibilityRole="button"
-            accessibilityLabel={t('a11y_tutorial')}
-            style={({ pressed }) => [styles.musicToggle, pressed && { opacity: 0.6 }]}
-          >
-            <Ionicons name="help-circle-outline" size={22} color={Colors.textSecondary} />
-          </Pressable>
-        </View>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.title, textDir]}>{t('title')}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.levelBadge}>
-            <Text style={[styles.levelLabel, textDir]}>
-              {t('round_label', { current: roundIndex + 1, total: totalRounds })}
-            </Text>
-          </View>
-        </View>
+        {(isRTL ? headerItems : [...headerItems].reverse()).map((item) => (
+          <React.Fragment key={item.key}>{item.node}</React.Fragment>
+        ))}
+      </View>
+      <View style={styles.roundLine}>
+        <Text style={[styles.roundLabel, textDir]}>
+          {t('round_label', { current: roundIndex + 1, total: totalRounds })}
+        </Text>
       </View>
 
       <View style={[styles.boardContainer, tutorialStep && tutorialFocus !== 'board' && styles.dimmed]}>
@@ -376,39 +431,20 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
                 showColor={hintLevel >= 1}
               />
             </Animated.View>
-            <View style={styles.goalActions}>
-              <Pressable
-                onPress={handleHintPress}
-                disabled={!hintEnabled}
-                accessibilityRole="button"
-                accessibilityLabel={t('a11y_hint')}
-                style={({ pressed }) => [
-                  styles.hintButton,
-                  pressed && { opacity: 0.6 },
-                  hintLevel > 0 && styles.hintButtonActive,
-                  // Keep the bulb bright whenever the step is waiting for a hint tap,
-                  // even when the spotlight is on the goal tile.
-                  tutorialStep && tutorialFocus !== 'hint' && tutorialAction !== 'hint' && styles.dimmed,
-                ]}
-              >
-                {tutorialFocus === 'hint' && <TutorialSpotlight radius={42} />}
-                <MaterialCommunityIcons name="lightbulb-outline" size={40} color={hintLevel > 0 ? Colors.accentGreen : Colors.textSecondary} />
-              </Pressable>
-              <Pressable
-                onPress={handleRotatePress}
-                disabled={!rotateEnabled}
-                accessibilityRole="button"
-                accessibilityLabel={t('a11y_rotate')}
-                style={({ pressed }) => [
-                  styles.rotateButton,
-                  pressed && { opacity: 0.6 },
-                  tutorialStep && tutorialFocus !== 'rotate' && styles.dimmed,
-                ]}
-              >
-                {tutorialFocus === 'rotate' && <TutorialSpotlight radius={42} />}
-                <MaterialCommunityIcons name="rotate-right" size={40} color={Colors.text} />
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={handleRotatePress}
+              disabled={!rotateEnabled}
+              accessibilityRole="button"
+              accessibilityLabel={t('a11y_rotate')}
+              style={({ pressed }) => [
+                styles.rotateButton,
+                pressed && { opacity: 0.6 },
+                tutorialStep && tutorialFocus !== 'rotate' && styles.dimmed,
+              ]}
+            >
+              {tutorialFocus === 'rotate' && <TutorialSpotlight radius={ROTATE_BUTTON / 2 + 6} />}
+              <MaterialCommunityIcons name="rotate-right" size={32} color={Colors.text} />
+            </Pressable>
           </View>
         ) : null}
       </View>
@@ -498,62 +534,43 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
+    height: HEADER_BAR_HEIGHT,
     flexDirection: 'row',
+    direction: 'ltr',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    gap: 2,
   },
-  headerLeft: {
-    flexShrink: 0,
-    flexDirection: 'row',
+  headerButton: {
+    width: HEADER_BUTTON,
+    height: HEADER_BUTTON,
+    borderRadius: HEADER_BUTTON / 2,
     alignItems: 'center',
-    gap: 8,
-    zIndex: 2,
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   headerCenter: {
     flex: 1,
     alignItems: 'center',
     minWidth: 0,
+    paddingHorizontal: 4,
   },
-  headerRight: {
-    flexShrink: 0,
-    alignItems: 'flex-end',
-    zIndex: 2,
+  roundLine: {
+    height: ROUND_LINE_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roundLabel: {
+    fontSize: 15,
+    fontFamily: 'Rubik_500Medium',
+    color: Colors.textSecondary,
   },
   title: {
-    fontSize: 18,
+    // Four header buttons share the bar with the title; step down on narrow phones.
+    fontSize: SCREEN_WIDTH < 340 ? 15 : SCREEN_WIDTH < 380 ? 17 : 20,
     fontFamily: 'Rubik_700Bold',
     color: Colors.text,
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 12,
-    fontFamily: 'Rubik_400Regular',
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  levelBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 6,
-  },
-  levelLabel: {
-    fontSize: 12,
-    fontFamily: 'Rubik_400Regular',
-    color: Colors.textSecondary,
-  },
-  levelNumber: {
-    fontSize: 16,
-    fontFamily: 'Rubik_700Bold',
-    color: Colors.accentBlue,
-  },
-  exitButton: {
-    padding: 4,
+    letterSpacing: SCREEN_WIDTH < 340 ? 0 : 1,
   },
   boardContainer: {
     alignItems: 'center',
@@ -575,26 +592,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     alignSelf: 'center',
   },
-  goalActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  hintButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   hintButtonActive: {
     backgroundColor: 'rgba(52, 199, 89, 0.15)',
   },
   rotateButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: ROTATE_BUTTON,
+    height: ROTATE_BUTTON,
+    borderRadius: ROTATE_BUTTON / 2,
+    alignSelf: 'center',
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -612,9 +617,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Rubik_400Regular',
     color: '#fff',
-  },
-  musicToggle: {
-    padding: 4,
   },
   dimmed: {
     opacity: 0.35,
