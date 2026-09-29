@@ -2,7 +2,7 @@
   "locale": "en-US",
   "dir": "ltr",
   "keys": {
-    "title": "Shapes Galore",
+    "title": "Shapeshift",
     "goal_caption": "Tap the square that contains this shape:",
     "attempts": "Attempts: {count}",
     "victory_title": "Excellent!",
