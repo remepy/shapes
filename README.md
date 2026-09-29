@@ -82,7 +82,9 @@ With no app around, the game runs standalone. To simulate the app, add `?bridge=
 
 The local server (not the game) then injects a stand-in for the app's `CyanGameBridge`. It
 answers `game_ready` with a 6-round `session_start` and logs every message in both
-directions to the browser console. In the console, `qa.pause()`, `qa.resume()` and
+directions to the browser console. When the game posts `game_finished`, `game_exit_requested` or
+`game_error`, a QA panel shows what the app received (in the app, the app's own screen
+would take over here), with a **Play again** button. In the console, `qa.pause()`, `qa.resume()` and
 `qa.abort()` send those messages, and `qa.messages` lists what the game has posted.
 
 Options you can add to the address: `&tutorial=0` (as though the tutorial was already

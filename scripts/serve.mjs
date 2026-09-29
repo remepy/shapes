@@ -17,9 +17,27 @@ const QA_BRIDGE = (q) => `<script>
   window.qa = { messages: [],
     pause: () => send({ type: 'pause' }), resume: () => send({ type: 'resume' }),
     abort: () => send({ type: 'abort', data: { reason: 'qa' } }) };
+  // In the real app these messages end the activity and the app shows its own
+  // screen. Locally nothing would happen, so show what the app received.
+  const showHandover = (m) => {
+    const titles = { game_finished: 'Session complete: the app now shows its summary',
+      game_exit_requested: 'Player quit: the app ends the activity (not completed)',
+      game_error: 'Game error: the app ends the activity (not completed)' };
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99999;padding:14px 16px;' +
+      'border-radius:14px;background:#1c1c1e;color:#fff;font:14px/1.4 -apple-system,system-ui,sans-serif;' +
+      'border:1px solid #0a84ff;box-shadow:0 6px 24px rgba(0,0,0,.6);direction:ltr;text-align:left';
+    box.innerHTML = '<div style="font-weight:600;color:#0a84ff;margin-bottom:6px">QA · ' + titles[m.type] + '</div>' +
+      '<pre style="margin:0 0 10px;white-space:pre-wrap;font:12px ui-monospace,monospace;color:#ccc"></pre>' +
+      '<button style="font:600 15px system-ui;padding:10px 16px;border:0;border-radius:10px;background:#0a84ff;color:#fff">Play again</button>';
+    box.querySelector('pre').textContent = JSON.stringify(m.data ?? {}, null, 1);
+    box.querySelector('button').onclick = () => location.reload();
+    document.body.appendChild(box);
+  };
   window.CyanGameBridge = { postMessage: (raw) => {
     const m = JSON.parse(raw); qa.messages.push(m);
     console.log('%cgame → app', 'color:#30d158', m);
+    if (['game_finished', 'game_exit_requested', 'game_error'].includes(m.type)) setTimeout(() => showHandover(m), 400);
     if (m.type === 'game_ready') setTimeout(() => send({ type: 'session_start', data: {
       protocolVersion: 1, sessionId: 'qa-' + Date.now(), expectedLocale: locale, levelIds,
       reducedMotion: q.get('reducedMotion') === '1', tutorialSeen: q.get('tutorial') === '0' } }), 300);
