@@ -9,7 +9,6 @@ import React, { createContext, useContext } from 'react';
 
 export const REQUIRED_KEYS = [
   'title',
-  'round_label',
   'goal_caption',
   'attempts',
   'victory_title',

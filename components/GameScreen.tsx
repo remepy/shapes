@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  useWindowDimensions,
   Platform,
   Pressable,
 } from 'react-native';
@@ -30,39 +31,56 @@ import Colors from '@/constants/colors';
 import { useTutorial } from '@/hooks/useTutorial';
 import { TutorialOverlay, TutorialSpotlight } from '@/components/TutorialOverlay';
 
-const { width: RAW_SCREEN_WIDTH, height: RAW_SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: RAW_SCREEN_WIDTH } = Dimensions.get('window');
 
 const PHONE_WIDTH = 360;
 const PHONE_HEIGHT = 780;
 const IS_DESKTOP_WEB = Platform.OS === 'web' && RAW_SCREEN_WIDTH > 500;
-
+/** Used only for type sizes; the board itself is sized at render time. */
 const SCREEN_WIDTH = IS_DESKTOP_WEB ? PHONE_WIDTH : RAW_SCREEN_WIDTH;
-const SCREEN_HEIGHT = IS_DESKTOP_WEB ? PHONE_HEIGHT : RAW_SCREEN_HEIGHT;
 
-const WEB_TOP_INSET = Platform.OS === 'web' ? (IS_DESKTOP_WEB ? 16 : 34) : 0;
-const WEB_BOTTOM_INSET = Platform.OS === 'web' ? (IS_DESKTOP_WEB ? 16 : 34) : 0;
+/**
+ * Levels are laid out on a fixed virtual canvas and drawn scaled to whatever
+ * space the screen has, so a level ID looks the same on every phone and the
+ * board can grow or shrink (safe-area insets, rotation) without regenerating.
+ */
+const VIRTUAL_CANVAS_WIDTH = 360;
+const CANVAS_ASPECT = GRID_DIMENSIONS.rows / GRID_DIMENSIONS.cols; // 6 / 4
+const VIRTUAL_CANVAS_HEIGHT = VIRTUAL_CANVAS_WIDTH * CANVAS_ASPECT;
 
-const CANVAS_PADDING = 16;
-const BASE_CANVAS_WIDTH = SCREEN_WIDTH - CANVAS_PADDING * 2;
-const CANVAS_ASPECT = 6 / 4;
-const BASE_CANVAS_HEIGHT = BASE_CANVAS_WIDTH * CANVAS_ASPECT;
-
+const SIDE_MARGIN = 6;
 const HEADER_BAR_HEIGHT = 56;
-const ROUND_LINE_HEIGHT = 24;
-const HEADER_HEIGHT = HEADER_BAR_HEIGHT + ROUND_LINE_HEIGHT;
 const HEADER_BUTTON = SCREEN_WIDTH < 340 ? 44 : 48; // touch target for header icons
-const ROTATE_BUTTON = 58; // 20% smaller than the previous 72
-// caption + gap + goal tile (min 96 + frame) + gap + rotate button + padding
-const GOAL_AREA_HEIGHT = 26 + 10 + 104 + 10 + ROTATE_BUTTON + 8;
-const AVAILABLE_FOR_CANVAS = SCREEN_HEIGHT - WEB_TOP_INSET - WEB_BOTTOM_INSET - HEADER_HEIGHT - GOAL_AREA_HEIGHT;
-const SCALE_FACTOR = AVAILABLE_FOR_CANVAS < BASE_CANVAS_HEIGHT
-  ? AVAILABLE_FOR_CANVAS / BASE_CANVAS_HEIGHT
-  : 1;
+const ROTATE_BUTTON = 58;
+const CAPTION_HEIGHT = 22;
+const GAP = 6;
+const TILE_FRAME = 8; // goal tile border + inner spacing
 
-const CANVAS_WIDTH = BASE_CANVAS_WIDTH * SCALE_FACTOR;
-const CANVAS_HEIGHT = BASE_CANVAS_HEIGHT * SCALE_FACTOR;
+interface Layout {
+  topInset: number;
+  bottomInset: number;
+  boardWidth: number;
+  boardHeight: number;
+  tileSize: number;
+}
 
-const TILE_SIZE = Math.max(Math.min(CANVAS_WIDTH / GRID_DIMENSIONS.cols, 90 * SCALE_FACTOR), 96);
+function computeLayout(winW: number, winH: number, insetTop: number, insetBottom: number): Layout {
+  const screenW = IS_DESKTOP_WEB ? PHONE_WIDTH : winW;
+  const screenH = IS_DESKTOP_WEB ? PHONE_HEIGHT : winH;
+  // Real safe-area insets (status bar / home indicator); small floor otherwise.
+  const topInset = IS_DESKTOP_WEB ? 8 : Math.max(insetTop, 4);
+  const bottomInset = IS_DESKTOP_WEB ? 8 : Math.max(insetBottom, 6);
+  const tileSize = Math.round(Math.min(Math.max(screenW * 0.25, 84), 110));
+  const goalArea = CAPTION_HEIGHT + GAP + tileSize + TILE_FRAME;
+  const availH = screenH - topInset - HEADER_BAR_HEIGHT - GAP - goalArea - GAP - bottomInset;
+  const availW = screenW - SIDE_MARGIN * 2;
+  const boardWidth = Math.floor(Math.max(120, Math.min(availW, availH / CANVAS_ASPECT)));
+  const boardHeight = Math.floor(boardWidth * CANVAS_ASPECT);
+  // On tall screens the board is width-limited; give the spare height to the goal tile.
+  const spare = Math.max(0, availH - boardHeight);
+  const grownTile = Math.round(Math.min(tileSize + spare * 0.8, 150));
+  return { topInset, bottomInset, boardWidth, boardHeight, tileSize: grownTile };
+}
 
 export interface GameSession {
   /** Ordered, one per round (session_start.levelIds). */
@@ -87,7 +105,7 @@ const ZERO_STATS: RoundStats = { wrongTaps: 0, hintsUsed: 0, rotations: 0 };
 const FINISH_DELAY_MS = 1500;
 
 function buildLevel(levelNumber: number): GameLevel {
-  return generateLevel(seedForLevel(levelNumber), CANVAS_WIDTH, CANVAS_HEIGHT);
+  return generateLevel(seedForLevel(levelNumber), VIRTUAL_CANVAS_WIDTH, VIRTUAL_CANVAS_HEIGHT);
 }
 
 function legacyWebExit() {
@@ -100,8 +118,10 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
   const insets = useSafeAreaInsets();
   const { t, isRTL } = useI18n();
   const reducedMotion = useReducedMotion();
-  const topInset = Platform.OS === 'web' ? WEB_TOP_INSET : insets.top;
-  const bottomInset = Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom;
+  const window = useWindowDimensions();
+  const { topInset, bottomInset, boardWidth, boardHeight, tileSize } = computeLayout(
+    window.width, window.height, insets.top, insets.bottom,
+  );
   const textDir = { writingDirection: isRTL ? 'rtl' : 'ltr' } as const;
   const forwardIcon = isRTL ? 'arrow-back' : 'arrow-forward';
 
@@ -267,13 +287,15 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
     return (
       <GameBoard
         level={gameLevel}
-        canvasWidth={CANVAS_WIDTH}
-        canvasHeight={CANVAS_HEIGHT}
+        canvasWidth={VIRTUAL_CANVAS_WIDTH}
+        canvasHeight={VIRTUAL_CANVAS_HEIGHT}
+        displayWidth={boardWidth}
+        displayHeight={boardHeight}
         highlightCell={highlight}
         showTarget={hintLevel >= 2 || tutorialAction === 'tap'}
       />
     );
-  }, [gameLevel, highlightCell, solved, hintLevel, tutorialAction]);
+  }, [gameLevel, highlightCell, solved, hintLevel, tutorialAction, boardWidth, boardHeight]);
 
   const phoneFrame = IS_DESKTOP_WEB ? {
     width: PHONE_WIDTH,
@@ -383,12 +405,6 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
           <React.Fragment key={item.key}>{item.node}</React.Fragment>
         ))}
       </View>
-      <View style={styles.roundLine}>
-        <Text style={[styles.roundLabel, textDir]}>
-          {t('round_label', { current: roundIndex + 1, total: totalRounds })}
-        </Text>
-      </View>
-
       <View style={[styles.boardContainer, tutorialStep && tutorialFocus !== 'board' && styles.dimmed]}>
         <View style={{ position: 'relative' }}>
           {highlightedBoard}
@@ -416,35 +432,41 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
         </View>
       </View>
 
-      <View style={[styles.bottomArea, { paddingBottom: bottomInset + 8 }]}>
+      <View style={[styles.bottomArea, { paddingBottom: bottomInset }]}>
         {!solved ? (
           <View style={styles.goalArea}>
             <Text style={[styles.goalCaption, textDir, tutorialStep && tutorialFocus !== 'goal' && styles.dimmed]}>{t('goal_caption')}</Text>
-            <Animated.View style={[tileShakeStyle, tutorialStep && tutorialFocus !== 'goal' && styles.dimmed]}>
-              {tutorialFocus === 'goal' && <TutorialSpotlight radius={12} />}
-              <GoalTile
-                level={gameLevel}
-                canvasWidth={CANVAS_WIDTH}
-                canvasHeight={CANVAS_HEIGHT}
-                tileSize={TILE_SIZE}
-                rotationOverride={userRotation}
-                showColor={hintLevel >= 1}
-              />
-            </Animated.View>
-            <Pressable
-              onPress={handleRotatePress}
-              disabled={!rotateEnabled}
-              accessibilityRole="button"
-              accessibilityLabel={t('a11y_rotate')}
-              style={({ pressed }) => [
-                styles.rotateButton,
-                pressed && { opacity: 0.6 },
-                tutorialStep && tutorialFocus !== 'rotate' && styles.dimmed,
-              ]}
-            >
-              {tutorialFocus === 'rotate' && <TutorialSpotlight radius={ROTATE_BUTTON / 2 + 6} />}
-              <MaterialCommunityIcons name="rotate-right" size={32} color={Colors.text} />
-            </Pressable>
+            {/* Goal tile stays centred; the rotate button sits beside it, balanced by an empty slot. */}
+            <View style={styles.goalRow}>
+              <View style={styles.rotateSlot} />
+              <Animated.View style={[tileShakeStyle, tutorialStep && tutorialFocus !== 'goal' && styles.dimmed]}>
+                {tutorialFocus === 'goal' && <TutorialSpotlight radius={12} />}
+                <GoalTile
+                  level={gameLevel}
+                  canvasWidth={VIRTUAL_CANVAS_WIDTH}
+                  canvasHeight={VIRTUAL_CANVAS_HEIGHT}
+                  tileSize={tileSize}
+                  rotationOverride={userRotation}
+                  showColor={hintLevel >= 1}
+                />
+              </Animated.View>
+              <View style={styles.rotateSlot}>
+                <Pressable
+                  onPress={handleRotatePress}
+                  disabled={!rotateEnabled}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('a11y_rotate')}
+                  style={({ pressed }) => [
+                    styles.rotateButton,
+                    pressed && { opacity: 0.6 },
+                    tutorialStep && tutorialFocus !== 'rotate' && styles.dimmed,
+                  ]}
+                >
+                  {tutorialFocus === 'rotate' && <TutorialSpotlight radius={ROTATE_BUTTON / 2 + 6} />}
+                  <MaterialCommunityIcons name="rotate-right" size={32} color={Colors.text} />
+                </Pressable>
+              </View>
+            </View>
           </View>
         ) : null}
       </View>
@@ -454,15 +476,15 @@ export function GameScreen({ session, paused, onEnded }: GameScreenProps) {
           stepIndex={tutorial.stepIndex}
           totalSteps={tutorial.totalSteps}
           placement={
-            // The card sits over the board's lower rows when anchored at the
-            // bottom, so if the target cell is in the lower half of the grid
-            // move it to the top instead so the frame stays fully visible.
-            tutorialFocus === 'board' && gameLevel.targetRow < GRID_DIMENSIONS.rows / 2
-              ? 'bottom'
+            // Keep cards off the part of the screen the step is about.
+            // Board steps: cover the goal area at the bottom, unless the step
+            // asks for a tap on a target in the lower half of the board.
+            tutorialFocus === 'board'
+              ? (tutorialAction === 'tap' && gameLevel.targetRow >= GRID_DIMENSIONS.rows / 2 ? 'top' : 'bottom')
               : 'top'
           }
-          topOffset={topInset + HEADER_HEIGHT + 8}
-          bottomOffset={bottomInset + 8}
+          topOffset={topInset + HEADER_BAR_HEIGHT + GAP}
+          bottomOffset={bottomInset + GAP}
           onNext={tutorial.next}
           onSkip={tutorial.skip}
         />
@@ -555,16 +577,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingHorizontal: 4,
   },
-  roundLine: {
-    height: ROUND_LINE_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roundLabel: {
-    fontSize: 15,
-    fontFamily: 'Rubik_500Medium',
-    color: Colors.textSecondary,
-  },
   title: {
     // Four header buttons share the bar with the title; step down on narrow phones.
     fontSize: SCREEN_WIDTH < 340 ? 15 : SCREEN_WIDTH < 380 ? 17 : 20,
@@ -574,19 +586,31 @@ const styles = StyleSheet.create({
   },
   boardContainer: {
     alignItems: 'center',
-    paddingHorizontal: CANVAS_PADDING,
+    marginTop: GAP,
   },
   bottomArea: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingTop: GAP,
   },
   goalArea: {
     alignItems: 'center',
-    gap: 10,
+    gap: GAP,
+  },
+  goalRow: {
+    flexDirection: 'row',
+    direction: 'ltr',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  rotateSlot: {
+    width: ROTATE_BUTTON,
+    alignItems: 'center',
   },
   goalCaption: {
     fontSize: 14,
+    lineHeight: CAPTION_HEIGHT,
     fontFamily: 'Rubik_500Medium',
     color: '#00FFFF',
     textAlign: 'center',
@@ -599,7 +623,6 @@ const styles = StyleSheet.create({
     width: ROTATE_BUTTON,
     height: ROTATE_BUTTON,
     borderRadius: ROTATE_BUTTON / 2,
-    alignSelf: 'center',
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',

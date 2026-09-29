@@ -10,6 +10,9 @@ interface GameBoardProps {
   canvasHeight: number;
   highlightCell?: { row: number; col: number } | null;
   showTarget?: boolean;
+  /** On-screen size. The level is laid out in canvasWidth × canvasHeight units and scaled to fit. */
+  displayWidth?: number;
+  displayHeight?: number;
 }
 
 function RenderShape({ shape, clipX, clipY, clipW, clipH }: {
@@ -125,7 +128,9 @@ function RenderShape({ shape, clipX, clipY, clipW, clipH }: {
   }
 }
 
-export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, showTarget }: GameBoardProps) {
+export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, showTarget, displayWidth, displayHeight }: GameBoardProps) {
+  const outW = displayWidth ?? canvasWidth;
+  const outH = displayHeight ?? canvasHeight;
   const cellW = canvasWidth / GRID_DIMENSIONS.cols;
   const cellH = canvasHeight / GRID_DIMENSIONS.rows;
 
@@ -159,8 +164,8 @@ export function GameBoard({ level, canvasWidth, canvasHeight, highlightCell, sho
   }, [cellW, cellH, canvasWidth, canvasHeight]);
 
   return (
-    <View style={[styles.container, { width: canvasWidth, height: canvasHeight }]}>
-      <Svg width={canvasWidth} height={canvasHeight} viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}>
+    <View style={[styles.container, { width: outW, height: outH }]}>
+      <Svg width={outW} height={outH} viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}>
         <Rect x={0} y={0} width={canvasWidth} height={canvasHeight} fill="#000000" />
 
         {level.shapes.map((shape) => (

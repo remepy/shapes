@@ -3,7 +3,6 @@
   "dir": "ltr",
   "keys": {
     "title": "Shapes Galore",
-    "round_label": "Round {current} of {total}",
     "goal_caption": "Tap the square that contains this shape:",
     "attempts": "Attempts: {count}",
     "victory_title": "Excellent!",

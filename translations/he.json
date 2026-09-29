@@ -3,7 +3,6 @@
   "dir": "rtl",
   "keys": {
     "title": "צורות בצרורות",
-    "round_label": "סיבוב {current} מתוך {total}",
     "goal_caption": "לחצו על התא שמכיל את הצורה הבאה:",
     "attempts": "ניסיונות: {count}",
     "victory_title": "מצוין!",
