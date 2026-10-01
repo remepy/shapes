@@ -8,14 +8,14 @@ import { join } from 'node:path';
 
 const GAME_ID = 'shapes';
 const LANGS = ['he', 'en'];
-const prefix = (process.env.CDN_PREFIX ?? '/games').replace(/\/$/, '');
+
 
 rmSync('dist', { recursive: true, force: true });
 rmSync(join('public', 'translations.json'), { force: true }); // dev-only copy
 
 for (const lang of LANGS) {
-  const basePath = `${prefix}/${GAME_ID}/${lang}`;
-  const outDir = join('dist', basePath);
+  const basePath = `./`;
+  const outDir = join('dist', GAME_ID, lang);
   console.log(`\n▶ Building ${lang} → ${outDir} (base path ${basePath})`);
   execFileSync('npx', ['expo', 'export', '--platform', 'web', '--output-dir', outDir, '--clear'], {
     stdio: 'inherit',
@@ -33,4 +33,4 @@ for (const lang of LANGS) {
     .replace('width=device-width, initial-scale=1, shrink-to-fit=no', 'width=device-width, initial-scale=1, viewport-fit=cover');
   writeFileSync(indexPath, html);
 }
-console.log(`\n✔ Built ${LANGS.length} language builds under dist${prefix}/${GAME_ID}/`);
+console.log(`\n✔ Built ${LANGS.length} language builds under dist/${GAME_ID}/`);
